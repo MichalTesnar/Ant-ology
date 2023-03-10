@@ -9,6 +9,7 @@ patches-own [
 turtles-own[
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
+ goRandom ;; is the movement random or targeted at X, Y
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,7 +21,11 @@ to setup
   set-default-shape turtles "bug"
   create-turtles population
   [ set size 2         ;; easier to see
-    set color red  ]   ;; red = not carrying food
+    set color red      ;; red = not carrying food
+    set coordX 0
+    set coordY 0
+    set goRandom 1
+  ]
   setup-patches
   reset-ticks
 end
@@ -74,7 +79,10 @@ to recolor-patch  ;; patch procedure
       if food-source-number = 2 [ set pcolor sky  ]
       if food-source-number = 3 [ set pcolor blue ] ]
     ;; scale color to show chemical concentration
-    [ set pcolor scale-color green chemical 0.1 5 ] ]
+    [ ifelse foraging_strategies = "group foraging"[
+      set pcolor scale-color green chemical 0.1 5 ][
+      set pcolor black
+  ]] ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -86,8 +94,8 @@ to go  ;; forever button
     foraging_strategies = "solitary foraging" [
 
     ]
-    foraging_strategies = "pray chain transfer" [
-
+    foraging_strategies = "prey chain transfer" [
+      go-chain
     ]
     foraging_strategies = "tandem carrying" [
 
@@ -97,6 +105,29 @@ to go  ;; forever button
     ]
   [])
   tick
+end
+
+to go-chain
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+        set goRandom 1
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][
+        wiggle-to-xy
+      ]
+    ]
+    [ return-to-nest ;; carrying food? take it back to nest
+      wiggle
+    ]
+    fd 1 ]
+  ask patches [
+    recolor-patch
+  ]
 end
 
 to go-chem
@@ -117,8 +148,11 @@ to return-to-nest  ;; turtle procedure
   ifelse nest?
   [ ;; drop food and head out again
     set color red
-    rt 180 ]
-  [ set chemical chemical + 60  ;; drop some chemical
+    rt 180
+    set goRandom 0
+  ]
+  [ if foraging_strategies = "group foraging"[
+    set chemical chemical + 60]  ;; drop some chemical
     uphill-nest-scent ]         ;; head toward the greatest value of nest-scent
 end
 
@@ -127,9 +161,11 @@ to look-for-food  ;; turtle procedure
   [ set color orange + 1     ;; pick up food
     set food food - 1        ;; and reduce the food source
     rt 180                   ;; and turn around
+    set coordX xcor
+    set coordY ycor
     stop ]
   ;; go in the direction where the chemical smell is strongest
-  if (chemical >= 0.05) and (chemical < 2)
+  if foraging_strategies = "group foraging" and (chemical >= 0.05) and (chemical < 2)
   [ uphill-chemical ]
 end
 
@@ -162,7 +198,17 @@ to wiggle  ;; turtle procedure
 end
 
 to wiggle-to-xy
+  let direction (towardsxy coordX coordY)
+  rt random 40
+  lt random 40
 
+  if subtract-headings direction heading  > 75 [
+    set heading (direction + 285) mod 360
+  ]
+  if subtract-headings direction heading  < -75[
+    set heading (direction + 75) mod 360
+  ]
+  if not can-move? 1 [ rt 180 ]
 end
 
 to-report nest-scent-at-angle [angle]
@@ -315,7 +361,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-3
+1
 
 CHOOSER
 11
