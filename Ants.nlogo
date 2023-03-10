@@ -23,10 +23,10 @@ turtles-own [
 
 to setup
   clear-all
-  set-default-shape turtles "bug"
+  set-default-shape turtles "ant"
   set food_down 0
   create-turtles population
-  [ set size 2         ;; easier to see
+  [ set size 3         ;; easier to see
     set color red      ;; red = not carrying food
     set coordX 0
     set coordY 0
@@ -518,6 +518,19 @@ airplane
 true
 0
 Polygon -7500403 true true 150 0 135 15 120 60 120 105 15 165 15 195 120 180 135 240 105 270 120 285 150 270 180 285 210 270 165 240 180 180 285 195 285 165 180 105 180 60 165 15
+
+ant
+true
+0
+Polygon -7500403 true true 136 61 129 46 144 30 119 45 124 60 114 82 97 37 132 10 93 36 111 84 127 105 172 105 189 84 208 35 171 11 202 35 204 37 186 82 177 60 180 44 159 32 170 44 165 60
+Polygon -7500403 true true 150 95 135 103 139 117 125 149 137 180 135 196 150 204 166 195 161 180 174 150 158 116 164 102
+Polygon -7500403 true true 149 186 128 197 114 232 134 270 149 282 166 270 185 232 171 195 149 186
+Polygon -7500403 true true 225 66 230 107 159 122 161 127 234 111 236 106
+Polygon -7500403 true true 78 58 99 116 139 123 137 128 95 119
+Polygon -7500403 true true 48 103 90 147 129 147 130 151 86 151
+Polygon -7500403 true true 65 224 92 171 134 160 135 164 95 175
+Polygon -7500403 true true 235 222 210 170 163 162 161 166 208 174
+Polygon -7500403 true true 249 107 211 147 168 147 168 150 213 150
 
 arrow
 true
