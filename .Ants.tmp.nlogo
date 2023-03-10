@@ -115,6 +115,7 @@ to go-chain
     [ look-for-food ;; not carrying food? look for it
       if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
         set goRandom 1
+
       ]
       ifelse goRandom = 1[
         wiggle
@@ -133,7 +134,7 @@ to go-chain
 end
 
 to transfer-prey
-  if any? (turtles-on patch-here) with[color = red and goRandom = 1][
+  if any? (turtles-on patch-here) with[color = red][
     if random 100 < (100 / (timesFoodPassed + 2))[
       ask one-of ((turtles-on patch-here) with[color = red])[
         set color orange + 1
@@ -348,7 +349,7 @@ population
 population
 0.0
 200.0
-125.0
+200.0
 1.0
 1
 NIL
