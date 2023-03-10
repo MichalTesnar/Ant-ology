@@ -6,6 +6,11 @@ patches-own [
   food-source-number   ;; number (1, 2, or 3) to identify the food sources
 ]
 
+turtles-own[
+ coordX ;; x coordinate of a place of interest
+ coordY ;; y coordinate of a place of interest
+]
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,10 +26,21 @@ to setup
 end
 
 to setup-patches
-  ask patches
-  [ setup-nest
-    setup-food
-    recolor-patch ]
+  ask patches [
+    setup-nest
+    (ifelse
+      food_distribution = "main blob"[
+        setup-food
+        recolor-patch
+      ]
+      food_distribution = "sparse blobs"[
+
+      ]
+      food_distribution = "random uniform"[
+
+      ]
+      [])
+     ]
 end
 
 to setup-nest  ;; patch procedure
@@ -66,6 +82,24 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
+  (ifelse
+    foraging_strategies = "solitary foraging" [
+
+    ]
+    foraging_strategies = "pray chain transfer" [
+
+    ]
+    foraging_strategies = "tandem carrying" [
+
+    ]
+    foraging_strategies = "group foraging" [
+      go-chem
+    ]
+  [])
+  tick
+end
+
+to go-chem
   ask turtles
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse color = red
@@ -77,7 +111,6 @@ to go  ;; forever button
   ask patches
   [ set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
     recolor-patch ]
-  tick
 end
 
 to return-to-nest  ;; turtle procedure
@@ -126,6 +159,10 @@ to wiggle  ;; turtle procedure
   rt random 40
   lt random 40
   if not can-move? 1 [ rt 180 ]
+end
+
+to wiggle-to-xy
+
 end
 
 to-report nest-scent-at-angle [angle]
@@ -269,6 +306,26 @@ PENS
 "food-in-pile1" 1.0 0 -11221820 true "" "plotxy ticks sum [food] of patches with [pcolor = cyan]"
 "food-in-pile2" 1.0 0 -13791810 true "" "plotxy ticks sum [food] of patches with [pcolor = sky]"
 "food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
+
+CHOOSER
+10
+493
+176
+538
+foraging_strategies
+foraging_strategies
+"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
+3
+
+CHOOSER
+11
+555
+176
+600
+food_distribution
+food_distribution
+"main blob" "sparse blobs" "random uniform"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
