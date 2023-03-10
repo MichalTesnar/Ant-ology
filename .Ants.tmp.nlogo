@@ -1,16 +1,12 @@
-globals [
-  food_down ;; food that has been put down already
-]
-
 patches-own [
   chemical             ;; amount of chemical on this patch
   food                 ;; amount of food on this patch (0, 1, or 2)
   nest?                ;; true on nest patches, false elsewhere
   nest-scent           ;; number that is higher closer to the nest
-  food-counter   ;; counter of how much food there is on the patch
+  food-source-number   ;; number (1, 2, or 3) to identify the food sources
 ]
 
-turtles-own [
+turtles-own[
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
  goRandom ;; is the movement random or targeted at X, Y
@@ -24,7 +20,6 @@ turtles-own [
 to setup
   clear-all
   set-default-shape turtles "bug"
-  set food_down 0
   create-turtles population
   [ set size 2         ;; easier to see
     set color red      ;; red = not carrying food
@@ -37,13 +32,21 @@ to setup
 end
 
 to setup-patches
-  ask patches [ ;; setup the colony nest
-    setup-nest
-     ]
-  setup-food
   ask patches [
-    recolor-patch
-  ]
+    setup-nest
+    (ifelse
+      food_distribution = "main blob"[
+        setup-food
+        recolor-patch
+      ]
+      food_distribution = "sparse blobs"[
+
+      ]
+      food_distribution = "random uniform"[
+
+      ]
+      [])
+     ]
 end
 
 to setup-nest  ;; patch procedure
@@ -53,56 +56,29 @@ to setup-nest  ;; patch procedure
   set nest-scent 200 - distancexy 0 0
 end
 
-to setup-food
- let radius sqrt(food_amount / (blob_count * pi) ) ; n*pi*r^2 = food_amount -> r = sqrt(food_amount / (pi*n))
-    ;; build blobs: not around the nest and not around the edges
-  ask n-of blob_count patches with [(distancexy 0 0) > (5 + radius) and abs(pxcor) < max-pxcor - radius and abs(pycor) < max-pycor - radius] [
-      ;; save nest coordinates
-      let save_x pxcor
-      let save_y pycor
-      ;; put down food within the radius as long as you have food to put down
-      ask patches with [(distancexy save_x save_y) < radius] [
-        if food_down < food_amount [
-          set food-counter food-counter + 1 ; set food source number; increase to see overlap (not needed)
-          set food food + 1 ; add food to the patch
-          set food_down food_down + 1 ; increase global count
-        ]
-      ]
-    ]
-    ;; put down remaining food on the existing food sources
-    repeat (food_amount - food_down) [
-       ask one-of patches with [food > 0] [
-          set food-counter food-counter + 1
-          set food food + 1
-          set food_down food_down + 1
-          ]
-  ]
+to setup-food  ;; patch procedure
+  ;; setup food source one on the right
+  if (distancexy (0.6 * max-pxcor) 0) < 5
+  [ set food-source-number 1 ]
+  ;; setup food source two on the lower-left
+  if (distancexy (-0.6 * max-pxcor) (-0.6 * max-pycor)) < 5
+  [ set food-source-number 2 ]
+  ;; setup food source three on the upper-left
+  if (distancexy (-0.8 * max-pxcor) (0.8 * max-pycor)) < 5
+  [ set food-source-number 3 ]
+  ;; set "food" at sources to either 1 or 2, randomly
+  if food-source-number > 0
+  [ set food one-of [1 2] ]
 end
-
-;to setup-food  ;; patch procedure
-;  ;; setup food source one on the right
-;  if (distancexy (0.6 * max-pxcor) 0) < 5
-;  [ set food-source-number 1 ]
-;  ;; setup food source two on the lower-left
-;  if (distancexy (-0.6 * max-pxcor) (-0.6 * max-pycor)) < 5
-;  [ set food-source-number 2 ]
-;  ;; setup food source three on the upper-left
-;  if (distancexy (-0.8 * max-pxcor) (0.8 * max-pycor)) < 5
-;  [ set food-source-number 3 ]
-;  ;; set "food" at sources to either 1 or 2, randomly
-;  if food-source-number > 0
-;  [ set food one-of [1 2] ]
-;end
 
 to recolor-patch  ;; patch procedure
   ;; give color to nest and food sources
   ifelse nest?
   [ set pcolor violet ]
   [ ifelse food > 0
-    [ if food-counter = 1 [ set pcolor cyan ]
-      if food-counter = 2 [ set pcolor sky  ]
-      if food-counter = 3 [ set pcolor blue ]
-      if food-counter > 3 [ set pcolor red ] ]
+    [ if food-source-number = 1 [ set pcolor cyan ]
+      if food-source-number = 2 [ set pcolor sky  ]
+      if food-source-number = 3 [ set pcolor blue ] ]
     ;; scale color to show chemical concentration
     [ ifelse foraging_strategies = "group foraging"[
       set pcolor scale-color green chemical 0.1 5 ][
@@ -139,6 +115,7 @@ to go-chain
     [ look-for-food ;; not carrying food? look for it
       if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
         set goRandom 1
+
       ]
       ifelse goRandom = 1[
         wiggle
@@ -157,7 +134,7 @@ to go-chain
 end
 
 to transfer-prey
-  if any? (turtles-on patch-here) with[color = red and goRandom = 1][
+  if any? (turtles-on patch-here) with[color = red][
     if random 100 < (100 / (timesFoodPassed + 2))[
       ask one-of ((turtles-on patch-here) with[color = red])[
         set color orange + 1
@@ -317,10 +294,10 @@ NIL
 1
 
 SLIDER
-828
-193
-1018
-226
+31
+106
+221
+139
 diffusion-rate
 diffusion-rate
 0.0
@@ -332,15 +309,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-828
-234
-1018
-267
+31
+141
+221
+174
 evaporation-rate
 evaporation-rate
 0.0
 99.0
-11.0
+10.0
 1.0
 1
 NIL
@@ -372,71 +349,51 @@ population
 population
 0.0
 200.0
-101.0
+200.0
 1.0
 1
 NIL
 HORIZONTAL
 
+PLOT
+5
+197
+248
+476
+Food in each pile
+time
+food
+0.0
+50.0
+0.0
+120.0
+true
+false
+"" ""
+PENS
+"food-in-pile1" 1.0 0 -11221820 true "" "plotxy ticks sum [food] of patches with [pcolor = cyan]"
+"food-in-pile2" 1.0 0 -13791810 true "" "plotxy ticks sum [food] of patches with [pcolor = sky]"
+"food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
+
 CHOOSER
-32
-277
-198
-322
+10
+493
+176
+538
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
 1
 
-TEXTBOX
-832
-166
-982
-184
-Chem trails\n
-14
-0.0
-1
-
-SLIDER
-841
-446
-1013
-479
-food_amount
-food_amount
+CHOOSER
+11
+555
+176
+600
+food_distribution
+food_distribution
+"main blob" "sparse blobs" "random uniform"
 0
-500
-331.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-844
-495
-1016
-528
-blob_count
-blob_count
-1
-200
-145.0
-1
-1
-NIL
-HORIZONTAL
-
-TEXTBOX
-842
-360
-1030
-413
-Menu (AKA Food Options)\n
-14
-0.0
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
