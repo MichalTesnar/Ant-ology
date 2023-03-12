@@ -13,8 +13,8 @@ patches-own [
 turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
- goRandom ;; is the movement random or targeted at X, Y
  timesFoodPassed
+ state ;; 'random' or 'wiggleXY' or "nest"
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,7 @@ to setup
     set color red      ;; red = not carrying food
     set coordX 0
     set coordY 0
-    set goRandom 1
+    set state "random"
   ]
   setup-patches
   reset-ticks
@@ -99,10 +99,10 @@ to recolor-patch  ;; patch procedure
   ifelse nest?
   [ set pcolor violet ]
   [ ifelse food > 0
-    [ if food-counter = 1 [ set pcolor cyan ]
-      if food-counter = 2 [ set pcolor sky  ]
-      if food-counter = 3 [ set pcolor blue ]
-      if food-counter > 3 [ set pcolor red ] ]
+    [ if food = 1 [ set pcolor cyan ]
+      if food = 2 [ set pcolor sky  ]
+      if food = 3 [ set pcolor blue ]
+      if food > 3 [ set pcolor red ] ]
     ;; scale color to show chemical concentration
     [ ifelse foraging_strategies = "group foraging"[
       set pcolor scale-color green chemical 0.1 5 ][
@@ -135,40 +135,63 @@ end
 to go-chain
   ask turtles
   [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
+    ifelse state != "nest"
     [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
-        set goRandom 1
+      if distancexy coordX coordY < vision-radius and state = "wiggleXY" [ ;; The movement is once again randomised after the desired position is seen
+        set state "random"
       ]
-      ifelse goRandom = 1[
+      ifelse state = "random"[
+        set color red
         wiggle
-      ][
+      ][ if state = "wiggleXY"[
+        set color red - 2
         wiggle-to-xy
-      ]
+      ]]
+      detect-food
     ]
     [ return-to-nest ;; carrying food? take it back to nest
       wiggle
       transfer-prey
     ]
-    fd 1 ]
+    fd 0.5 ]
   ask patches [
     recolor-patch
   ]
 end
 
+to detect-food
+  if any? patches with [food > 0] and distance (min-one-of patches with [food > 0] [distance myself]) < vision-radius[
+    set heading towards min-one-of patches with [food > 0] [distance myself]
+  ]
+end
+
 to transfer-prey
-  if any? (turtles-on patch-here) with[color = red and goRandom = 1][
+;  if timesFoodPassed < 2 [
+;  approach-ant
+;  ]
+  if any? (turtles-on patch-here) with[state = "random"][
     if random 100 < (100 / (timesFoodPassed + 2))[
-      ask one-of ((turtles-on patch-here) with[color = red])[
+      ask one-of ((turtles-on patch-here) with[state = "random"])[
         set color orange + 1
         set coordX xcor
         set coordY ycor
-        set timesFoodPassed [timesFoodPassed] of myself + 1
+        set state "nest"
+        set timesFoodPassed ([timesFoodPassed] of myself) + 1
+        show timesFoodPassed
         rt 180
       ]
       set color red
       rt 180
-      set goRandom 0
+      set state "wiggleXY"
+    ]
+  ]
+end
+
+to approach-ant
+  if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) < vision-radius[
+    set heading towards min-one-of turtles with [state = "random"][distance myself]
+    ask min-one-of turtles with [state = "random"][distance myself][
+      set heading towards myself
     ]
   ]
 end
@@ -192,8 +215,9 @@ to return-to-nest  ;; turtle procedure
   [ ;; drop food and head out again
     set color red
     rt 180
-    set goRandom 0
-    show timesFoodPassed
+    if state = "nest"[
+      set state "wiggleXY"
+    ]
   ]
   [ if foraging_strategies = "group foraging"[
     set chemical chemical + 60]  ;; drop some chemical
@@ -207,6 +231,7 @@ to look-for-food  ;; turtle procedure
     rt 180                   ;; and turn around
     set coordX xcor
     set coordY ycor
+    set state "nest"
     set timesFoodPassed 0
     stop ]
   ;; go in the direction where the chemical smell is strongest
@@ -372,7 +397,7 @@ population
 population
 0.0
 200.0
-101.0
+103.0
 1.0
 1
 NIL
@@ -437,6 +462,21 @@ Menu (AKA Food Options)\n
 14
 0.0
 1
+
+SLIDER
+42
+114
+214
+147
+vision-radius
+vision-radius
+0
+10
+5.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
