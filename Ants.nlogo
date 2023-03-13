@@ -1,3 +1,5 @@
+extensions [sound] ;extend this, if you want
+
 globals [
   food_down ;; food that has been put down already
 ]
@@ -22,6 +24,135 @@ turtles-own [
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup
+  sound:stop-music
+  sound:play-sound-later "sounds/0_sound.wav" 0
+  sound:play-sound-later "sounds/1_sound.wav" 1
+  sound:play-sound-later "sounds/2_sound.wav" 2
+  sound:play-sound-later "sounds/3_sound.wav" 3
+  sound:play-sound-later "sounds/4_sound.wav" 4
+  sound:play-sound-later "sounds/5_sound.wav" 5
+  sound:play-sound-later "sounds/6_sound.wav" 6
+  sound:play-sound-later "sounds/7_sound.wav" 7
+  sound:play-sound-later "sounds/8_sound.wav" 8
+  sound:play-sound-later "sounds/9_sound.wav" 9
+  sound:play-sound-later "sounds/10_sound.wav" 10
+  sound:play-sound-later "sounds/11_sound.wav" 11
+  sound:play-sound-later "sounds/12_sound.wav" 12
+  sound:play-sound-later "sounds/13_sound.wav" 13
+  sound:play-sound-later "sounds/14_sound.wav" 14
+  sound:play-sound-later "sounds/15_sound.wav" 15
+  sound:play-sound-later "sounds/16_sound.wav" 16
+  sound:play-sound-later "sounds/17_sound.wav" 17
+  sound:play-sound-later "sounds/18_sound.wav" 18
+  sound:play-sound-later "sounds/19_sound.wav" 19
+  sound:play-sound-later "sounds/20_sound.wav" 20
+  sound:play-sound-later "sounds/21_sound.wav" 21
+  sound:play-sound-later "sounds/22_sound.wav" 22
+  sound:play-sound-later "sounds/23_sound.wav" 23
+  sound:play-sound-later "sounds/24_sound.wav" 24
+  sound:play-sound-later "sounds/25_sound.wav" 25
+  sound:play-sound-later "sounds/26_sound.wav" 26
+  sound:play-sound-later "sounds/27_sound.wav" 27
+  sound:play-sound-later "sounds/28_sound.wav" 28
+  sound:play-sound-later "sounds/29_sound.wav" 29
+  sound:play-sound-later "sounds/30_sound.wav" 30
+  sound:play-sound-later "sounds/31_sound.wav" 31
+  sound:play-sound-later "sounds/32_sound.wav" 32
+  sound:play-sound-later "sounds/33_sound.wav" 33
+  sound:play-sound-later "sounds/34_sound.wav" 34
+  sound:play-sound-later "sounds/35_sound.wav" 35
+  sound:play-sound-later "sounds/36_sound.wav" 36
+  sound:play-sound-later "sounds/37_sound.wav" 37
+  sound:play-sound-later "sounds/38_sound.wav" 38
+  sound:play-sound-later "sounds/39_sound.wav" 39
+  sound:play-sound-later "sounds/40_sound.wav" 40
+  sound:play-sound-later "sounds/41_sound.wav" 41
+  sound:play-sound-later "sounds/42_sound.wav" 42
+  sound:play-sound-later "sounds/43_sound.wav" 43
+  sound:play-sound-later "sounds/44_sound.wav" 44
+  sound:play-sound-later "sounds/45_sound.wav" 45
+  sound:play-sound-later "sounds/46_sound.wav" 46
+  sound:play-sound-later "sounds/47_sound.wav" 47
+  sound:play-sound-later "sounds/48_sound.wav" 48
+  sound:play-sound-later "sounds/49_sound.wav" 49
+  sound:play-sound-later "sounds/50_sound.wav" 50
+  sound:play-sound-later "sounds/51_sound.wav" 51
+  sound:play-sound-later "sounds/52_sound.wav" 52
+  sound:play-sound-later "sounds/53_sound.wav" 53
+  sound:play-sound-later "sounds/54_sound.wav" 54
+  sound:play-sound-later "sounds/55_sound.wav" 55
+  sound:play-sound-later "sounds/56_sound.wav" 56
+  sound:play-sound-later "sounds/57_sound.wav" 57
+  sound:play-sound-later "sounds/58_sound.wav" 58
+  sound:play-sound-later "sounds/59_sound.wav" 59
+  sound:play-sound-later "sounds/60_sound.wav" 60
+  sound:play-sound-later "sounds/61_sound.wav" 61
+  sound:play-sound-later "sounds/62_sound.wav" 62
+  sound:play-sound-later "sounds/63_sound.wav" 63
+  sound:play-sound-later "sounds/64_sound.wav" 64
+  sound:play-sound-later "sounds/65_sound.wav" 65
+  sound:play-sound-later "sounds/66_sound.wav" 66
+  sound:play-sound-later "sounds/67_sound.wav" 67
+  sound:play-sound-later "sounds/68_sound.wav" 68
+  sound:play-sound-later "sounds/69_sound.wav" 69
+  sound:play-sound-later "sounds/70_sound.wav" 70
+  sound:play-sound-later "sounds/71_sound.wav" 71
+  sound:play-sound-later "sounds/72_sound.wav" 72
+  sound:play-sound-later "sounds/73_sound.wav" 73
+  sound:play-sound-later "sounds/74_sound.wav" 74
+  sound:play-sound-later "sounds/75_sound.wav" 75
+  sound:play-sound-later "sounds/76_sound.wav" 76
+  sound:play-sound-later "sounds/77_sound.wav" 77
+  sound:play-sound-later "sounds/78_sound.wav" 78
+  sound:play-sound-later "sounds/79_sound.wav" 79
+  sound:play-sound-later "sounds/80_sound.wav" 80
+  sound:play-sound-later "sounds/81_sound.wav" 81
+  sound:play-sound-later "sounds/82_sound.wav" 82
+  sound:play-sound-later "sounds/83_sound.wav" 83
+  sound:play-sound-later "sounds/84_sound.wav" 84
+  sound:play-sound-later "sounds/85_sound.wav" 85
+  sound:play-sound-later "sounds/86_sound.wav" 86
+  sound:play-sound-later "sounds/87_sound.wav" 87
+  sound:play-sound-later "sounds/88_sound.wav" 88
+  sound:play-sound-later "sounds/89_sound.wav" 89
+  sound:play-sound-later "sounds/90_sound.wav" 90
+  sound:play-sound-later "sounds/91_sound.wav" 91
+  sound:play-sound-later "sounds/92_sound.wav" 92
+  sound:play-sound-later "sounds/93_sound.wav" 93
+  sound:play-sound-later "sounds/94_sound.wav" 94
+  sound:play-sound-later "sounds/95_sound.wav" 95
+  sound:play-sound-later "sounds/96_sound.wav" 96
+  sound:play-sound-later "sounds/97_sound.wav" 97
+  sound:play-sound-later "sounds/98_sound.wav" 98
+  sound:play-sound-later "sounds/99_sound.wav" 99
+  sound:play-sound-later "sounds/100_sound.wav" 100
+  sound:play-sound-later "sounds/101_sound.wav" 101
+  sound:play-sound-later "sounds/102_sound.wav" 102
+  sound:play-sound-later "sounds/103_sound.wav" 103
+  sound:play-sound-later "sounds/104_sound.wav" 104
+  sound:play-sound-later "sounds/105_sound.wav" 105
+  sound:play-sound-later "sounds/106_sound.wav" 106
+  sound:play-sound-later "sounds/107_sound.wav" 107
+  sound:play-sound-later "sounds/108_sound.wav" 108
+  sound:play-sound-later "sounds/109_sound.wav" 109
+  sound:play-sound-later "sounds/110_sound.wav" 110
+  sound:play-sound-later "sounds/111_sound.wav" 111
+  sound:play-sound-later "sounds/112_sound.wav" 112
+  sound:play-sound-later "sounds/113_sound.wav" 113
+  sound:play-sound-later "sounds/114_sound.wav" 114
+  sound:play-sound-later "sounds/115_sound.wav" 115
+  sound:play-sound-later "sounds/116_sound.wav" 116
+  sound:play-sound-later "sounds/117_sound.wav" 117
+  sound:play-sound-later "sounds/118_sound.wav" 118
+  sound:play-sound-later "sounds/119_sound.wav" 119
+  sound:play-sound-later "sounds/120_sound.wav" 120
+  sound:play-sound-later "sounds/121_sound.wav" 121
+  sound:play-sound-later "sounds/122_sound.wav" 122
+  sound:play-sound-later "sounds/123_sound.wav" 123
+  sound:play-sound-later "sounds/124_sound.wav" 124
+  sound:play-sound-later "sounds/125_sound.wav" 125
+
+
   clear-all
   set-default-shape turtles "ant"
   set food_down 0
