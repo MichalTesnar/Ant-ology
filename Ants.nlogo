@@ -14,7 +14,7 @@ turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
  timesFoodPassed
- state ;; 'random', 'wiggleXY', "nest", "recruiting1", "recriuting2", "carried"
+ state ;; 'random', 'wiggleXY', "nest", "recruiting1", "recriuting2", "carried", "stationary"
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -119,11 +119,12 @@ to go
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse state != "nest"
     [ look-for-food ;; not carrying food? look for it
+      if state = "carried" and count my-links = 0[
+      break-link
+      ]
       if distancexy coordX coordY < vision-radius and state = "wiggleXY" [ ;; The movement is once again randomised after the desired position is seen
         set state "random"
-        ask my-out-links[
-          die
-        ]
+        break-link
       ]
       if state = "random"[
         set color red
@@ -143,17 +144,8 @@ to go
         ]
       ]
       if state = "recruiting2"[
-        approach-ant
-        if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) <= 1[
-          ask min-one-of turtles with [state = "random"][distance myself][
-            rt 180
-;            create-link-to myself [ tie ]
-            set state "carried"
-            set color green
-          ]
-          create-link-to min-one-of turtles with [state = "carried"][distance myself] [tie]
-          set state "wiggleXY"
-        ]
+        call-stationary
+        recruit-ant
       ]
     ]
     [
@@ -164,8 +156,9 @@ to go
         ]
       ]
     ]
-    if state != "carried"[
+    if state != "carried" and state != "recruiting2" and state != "stationary"[
       fd 1 ]
+    assign-stationary
   ]
 
   if foraging_strategies = "group foraging" [
@@ -178,6 +171,32 @@ to go
     ]
   ]
   tick
+end
+
+to break-link
+  set state "random"
+  ask my-links [ask other-end[
+    set state "random"
+    ask my-out-links[
+      die
+    ]
+  ]]
+  ask my-links[
+      die
+  ]
+end
+
+to recruit-ant
+  if any? turtles with [state = "stationary"] and distance (min-one-of turtles with [state = "stationary"] [distance myself]) <= 1[
+          ask min-one-of turtles with [state = "stationary"][distance myself][
+            rt 180
+            set state "carried"
+            set color green
+          ]
+          create-link-to min-one-of turtles with [state = "carried"][distance myself] [tie]
+          set state "wiggleXY"
+
+        ]
 end
 
 to detect-food
@@ -211,10 +230,27 @@ end
 to approach-ant
   if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) < vision-radius[
     set heading towards min-one-of turtles with [state = "random"][distance myself]
-    ask min-one-of turtles with [state = "random"][distance myself][
+    ask min-one-of turtles with [state = "random" ][distance myself][
       set heading towards myself
     ]
   ]
+end
+
+to call-stationary
+  if any? turtles with [state = "stationary"][
+    set heading towards min-one-of turtles with [state = "stationary"][distance myself]
+    ask min-one-of turtles with [state = "stationary" ][distance myself][
+      set heading towards myself
+      fd 1
+    ]
+  ]
+end
+
+to assign-stationary
+  if nest? and state = "random" and count turtles with [state = "stationary"] < count turtles / 20[
+      set state "stationary"
+      set color pink
+    ]
 end
 
 to return-to-nest  ;; turtle procedure
@@ -223,7 +259,11 @@ to return-to-nest  ;; turtle procedure
     set color red
     rt 180
     if state = "nest"[
-      set state "wiggleXY"
+        set state "wiggleXY"
+      if count turtles with [state = "stationary"] < count turtles / 20[
+        set state "stationary"
+        set color pink
+      ]
     ]
   ]
   [ if foraging_strategies = "group foraging"[
@@ -234,21 +274,24 @@ end
 to look-for-food  ;; turtle procedure
   if food > 0
   [
-    ifelse foraging_strategies = "tandem carrying" and count (patches with [food > 0 and distance myself < vision-radius]) > 2[
+    break-link
+    ifelse foraging_strategies = "tandem carrying" and count (patches with [food > 0 and distance myself < vision-radius]) > 2 and random 100 < 80
+    and count other turtles with [state = "recruiting2" or state = "recruiting1"] < count turtles with [state = "random"] / 4[
       set state "recruiting1"
       set color blue
-    ][
-      ask my-out-links[
-          die
-        ]
-      set color orange + 1     ;; pick up food
-      set food food - 1        ;; and reduce the food source
-      rt 180                   ;; and turn around
       set coordX xcor
       set coordY ycor
-      set state "nest"
-      set timesFoodPassed 0
-      stop ]]
+
+    ][
+      if state != "carried"[
+        set color orange + 1     ;; pick up food
+        set food food - 1        ;; and reduce the food source
+        rt 180                   ;; and turn around
+        set coordX xcor
+        set coordY ycor
+        set state "nest"
+        set timesFoodPassed 0
+        stop ]]]
   ;; go in the direction where the chemical smell is strongest
   if foraging_strategies = "group foraging" and (chemical >= 0.05) and (chemical < 2)
   [ uphill-chemical ]
@@ -274,6 +317,8 @@ to uphill-nest-scent  ;; turtle procedure
   [ ifelse scent-right > scent-left
     [ rt 45 ]
     [ lt 45 ] ]
+end
+
 to wiggle-to-0  ;; turtle procedure
   let direction (towardsxy 0 0)
   rt random 20
@@ -424,7 +469,7 @@ population
 population
 0.0
 200.0
-103.0
+100.0
 1.0
 1
 NIL
@@ -438,7 +483,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-1
+2
 
 TEXTBOX
 832
@@ -459,7 +504,7 @@ food_amount
 food_amount
 0
 500
-331.0
+200.0
 1
 1
 NIL
@@ -474,7 +519,7 @@ blob_count
 blob_count
 1
 200
-145.0
+10.0
 1
 1
 NIL
@@ -499,7 +544,7 @@ vision-radius
 vision-radius
 0
 10
-5.0
+3.0
 1
 1
 NIL
