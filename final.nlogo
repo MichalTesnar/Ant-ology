@@ -1,19 +1,18 @@
 patches-own [
-  pheromone            ;; amount of pheromone on this patch
+  chemical             ;; amount of chemical on this patch
   food                 ;; amount of food on this patch (0, 1, or 2)
+  nest?                ;; true on nest patches, false elsewhere
+  nest-scent           ;; number that is higher closer to the nest
+  food-source-number   ;; number (1, 2, or 3) to identify the food sources
+  circleInfluence      ;; making range of effect of bomb
 ]
 
-turtles-own [
-  carrying-food?
-  food-coord?
-  food-x
-  food-y
+turtles-own[
+ coordX ;; x coordinate of a place of interest
+ coordY ;; y coordinate of a place of interest
+ goRandom ;; is the movement random or targeted at X, Y
+ timesFoodPassed
 ]
-
-;;;; To do:
-;; 1. figure out how to pen-down
-;; 2. add noise to food-x and food-y coordinates according to distance
-;; 3. make them wander if there's no food in those coordinates anymore
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
@@ -22,53 +21,73 @@ turtles-own [
 to setup
   clear-all
   set-default-shape turtles "bug"
+  create-turtles population
+  [ set size 2         ;; easier to see
+    set color red      ;; red = not carrying food
+    set coordX 0
+    set coordY 0
+    set goRandom 1
+  ]
   setup-patches
   reset-ticks
 end
 
 to setup-patches
-  setup-nest
-  setup-food
-  recolor-patches
+  ask patches [
+    setup-nest
+    set chemical 0
+    set circleInfluence patches in-radius 10
+    ;;show circleInfluence
+    (ifelse
+      food_distribution = "main blob"[
+        setup-food
+        recolor-patch
+      ]
+      food_distribution = "sparse blobs"[
+
+      ]
+      food_distribution = "random uniform"[
+
+      ]
+      [])
+     ]
 end
 
-to setup-nest
-  ask patches with [ nest? ] [
-    set pcolor violet
-  ]
+to setup-nest  ;; patch procedure
+  ;; set nest? variable to true inside the nest, false elsewhere
+  set nest? (distancexy 0 0) < 5
+  ;; spread a nest-scent over the whole world -- stronger near the nest
+  set nest-scent 200 - distancexy 0 0
 end
 
-to setup-food
-  ;; setup a food source on the right
-  ask patch (0.6 * max-pxcor) 0 [
-    make-food-source cyan
-  ]
-  ;; setup a food source on the lower-left
-  ask patch (-0.6 * max-pxcor) (-0.6 * max-pycor) [
-    make-food-source sky
-  ]
-  ;; setup a food source on the upper-left
-  ask patch (-0.8 * max-pxcor) (0.8 * max-pycor) [
-    make-food-source blue
-  ]
+to setup-food  ;; patch procedure
+  ;; setup food source one on the right
+  if (distancexy (0.6 * max-pxcor) 0) < 5
+  [ set food-source-number 1 ]
+  ;; setup food source two on the lower-left
+  if (distancexy (-0.6 * max-pxcor) (-0.6 * max-pycor)) < 5
+  [ set food-source-number 2 ]
+  ;; setup food source three on the upper-left
+  if (distancexy (-0.8 * max-pxcor) (0.8 * max-pycor)) < 5
+  [ set food-source-number 3 ]
+  ;; set "food" at sources to either 1 or 2, randomly
+  if food-source-number > 0
+  [ set food one-of [1 2] ]
 end
 
-to make-food-source [ food-source-color ] ;; patch procedure
-  ask patches with [ distance myself < 5 ] [
-    set food 2
-    set pcolor food-source-color
-  ]
-end
-
-to recolor-patches
-  ask patches with [ food = 0 and not nest? ] [
-    ifelse chemical-trail [
-      ;; scale color to show pheromone concentration
-      set pcolor scale-color green pheromone 0.1 5
-    ][
+to recolor-patch  ;; patch procedure
+  ;; give color to nest and food sources
+  ifelse nest?
+  [ set pcolor violet ]
+  [ ifelse food > 0
+    [ if food-source-number = 1 [ set pcolor cyan ]
+      if food-source-number = 2 [ set pcolor sky  ]
+      if food-source-number = 3 [ set pcolor blue ] ]
+    ;; scale color to show chemical concentration
+    [ ifelse foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+      set pcolor scale-color green chemical 0.1 5 ][
       set pcolor black
-    ]
-  ]
+  ]] ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -76,143 +95,219 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
-  ;; add ants one at a time
-  if count turtles < population [ create-ant ]
-  ask turtles [
-    move
-    recolor
-  ]
-  ask patches [
-    if chemical-trail [
-      ;; slowly evaporate pheromone
-      set pheromone pheromone * (100 - evaporation-rate) / 100
-      if pheromone < 0.05 [ set pheromone 0 ]
+  (ifelse
+    foraging_strategies = "solitary foraging" [
+      go-solitary
     ]
-  ]
-  if chemical-trail [
-    diffuse pheromone (diffusion-rate / 100)
-  ]
-  recolor-patches
-  ;; I just wanted to stop earlier
-  if all? patches [food = 0] and all? turtles [carrying-food? = false ][
+    foraging_strategies = "prey chain transfer" [
+      go-chain
+    ]
+    foraging_strategies = "tandem carrying" [
+
+    ]
+    foraging_strategies = "group foraging" [
+      go-chem
+    ]
+    foraging_strategies = "pheromone bomb" [
+      go-chem-bomb
+    ]
+  [])
+    ;; I just wanted to stop earlier
+  if all? patches [food = 0][
     stop
   ]
   tick
 end
 
-to move  ;; turtle procedure
-  if not carrying-food? [ look-for-food  ]  ;; if not carrying food, look for it
-  if carrying-food? [ move-towards-nest ]   ;; if carrying food head back to the nest
-  wander                                    ;; turn a small random amount and move forward
-end
-
-to create-ant
-  create-turtles 1 [
-    set size 2  ;; easier to see
-    set carrying-food? false
-    set food-coord? false
-    set food-x 0
-    set food-y 0
-  ]
-end
-
-to move-towards-nest  ;; turtle procedure
-  ifelse nest? [
-    ;; drop food and head out again
-    set carrying-food? false
-    rt 180
-  ] [
-    if chemical-trail [
-      set pheromone pheromone + 60  ;; drop some pheromone
+to go-solitary
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+        set goRandom 1
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][wiggle-to-xy]
+    ][ return-to-nest ;; carrying food? take it back to nest
+      wiggle
     ]
-    ;; turn towards the nest, which is at the center
-    facexy 0 0
+    fd 1 ]
+  ask patches [
+    recolor-patch
   ]
+end
+
+to go-chain
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired position is reached
+        set goRandom 1
+
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][
+        wiggle-to-xy
+      ]
+    ]
+    [ return-to-nest ;; carrying food? take it back to nest
+      wiggle
+      transfer-prey
+    ]
+    fd 1 ]
+  ask patches [
+    recolor-patch
+  ]
+end
+
+to transfer-prey
+  if any? (turtles-on patch-here) with[color = red][
+    if random 100 < (100 / (timesFoodPassed + 2))[
+      ask one-of ((turtles-on patch-here) with[color = red])[
+        set color orange + 1
+        set coordX xcor
+        set coordY ycor
+        set timesFoodPassed [timesFoodPassed] of myself + 1
+        rt 180
+      ]
+      set color red
+      rt 180
+      set goRandom 0
+    ]
+  ]
+end
+
+to go-chem
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food  ]       ;; not carrying food? look for it
+    [ return-to-nest ]       ;; carrying food? take it back to nest
+    wiggle
+    fd 1 ]
+  diffuse chemical (diffusion-rate / 100)
+  ask patches
+  [ set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
+    recolor-patch ]
+end
+
+to go-chem-bomb
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+        set goRandom 1
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][wiggle-to-xy]
+    ][ return-to-nest ;; carrying food? take it back to nest
+      wiggle
+    ]
+    fd 1 ]
+  diffuse chemical (diffusion-rate / 100)
+  ask patches[
+    recolor-patch
+    set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
+  ]
+end
+
+to return-to-nest  ;; turtle procedure
+  ifelse nest?
+  [ ;; drop food and head out again
+    set color red
+    rt 180
+    set goRandom 0
+    if foraging_strategies = "prey chain"[
+    show timesFoodPassed]
+  ]
+  [ if foraging_strategies = "group foraging"[
+    set chemical chemical + 60]  ;; drop some chemical
+    uphill-nest-scent ]         ;; head toward the greatest value of nest-scent
 end
 
 to look-for-food  ;; turtle procedure
-  ifelse food > 0 [
-    set carrying-food? true  ;; pick up food
-    set food food - 1        ;; reduce the food source
-    set food-coord? true
-    set food-x pxcor + random-float 4      ;; store position of food
-    set food-y pycor + random-float 4
-    ;;rt 180                   ;; and turn around
-  ] [
-    ;; go in the direction where the pheromone smell is strongest
-    if chemical-trail [
-      uphill-pheromone
-    ]
-    ifelse solitary-foraging [
-      ifelse food-coord? [
-        ifelse (xcor = food-x and ycor = food-y) [
-          ifelse (not any? ((patches with [food > 0]) in-radius 7))[
-            set food-x 0
-            set food-y 0
-            wander
-          ][
-            let target-patch min-one-of (patches in-radius 7 with [food > 0]) [distance myself]
-            ask target-patch[
-              set food-x xcor
-              set food-y ycor
-            ]
-          ]
-        ][
-        wiggle-towards-food
+  if food > 0
+  [ set color orange + 1     ;; pick up food
+    set food food - 1        ;; and reduce the food source
+    if foraging_strategies = "pheromone bomb"[
+      print "bomb deployed"
+      ask patches in-radius 5 [
+        set chemical 60
+        ask circleInfluence [
+          set chemical 20 - distance myself
+        ]
       ]
-    ][ wander ]
-    ][ wander ]
+    ]
+    rt 180                   ;; and turn around
+    set coordX xcor
+    set coordY ycor
+    set timesFoodPassed 0
+    ;;show "have food"
+    stop ]
+  ;; go in the direction where the chemical smell is strongest
+  if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+    if (chemical >= 0.05) and (chemical < 2)[ uphill-chemical ]
   ]
 end
 
 ;; sniff left and right, and go where the strongest smell is
-to uphill-pheromone  ;; turtle procedure
-  ;; only turn if the current patch doesn't have much pheromone
-  if pheromone < 2 [
-    let scent-ahead pheromone-scent-at-angle   0
-    let scent-right pheromone-scent-at-angle  45
-    let scent-left  pheromone-scent-at-angle -45
-    if (scent-right > scent-ahead) or (scent-left > scent-ahead) [
-      ifelse scent-right > scent-left
-        [ rt 45 ]
-        [ lt 45 ]
-    ]
-  ]
+to uphill-chemical  ;; turtle procedure
+  let scent-ahead chemical-scent-at-angle   0
+  let scent-right chemical-scent-at-angle  45
+  let scent-left  chemical-scent-at-angle -45
+  if (scent-right > scent-ahead) or (scent-left > scent-ahead)
+  [ ifelse scent-right > scent-left
+    [ rt 45 ]
+    [ lt 45 ] ]
 end
 
-to wiggle-towards-food ;; turtle procedure
-  rt random-float 15
-  lt random-float 15
-  if ((food-x != 0) and (food-y != 0))[
-    ifelse ((xcor > (food-x - 5 )) or (xcor > (food-x + 5 )))[    ;; if current x is within 5 from the food position it goes directly there
-       facexy food-x food-y
-    ][ ;; else wander
-      wander
-    ]
-  ]
+;; sniff left and right, and go where the strongest smell is
+to uphill-nest-scent  ;; turtle procedure
+  let scent-ahead nest-scent-at-angle   0
+  let scent-right nest-scent-at-angle  45
+  let scent-left  nest-scent-at-angle -45
+  if (scent-right > scent-ahead) or (scent-left > scent-ahead)
+  [ ifelse scent-right > scent-left
+    [ rt 45 ]
+    [ lt 45 ] ]
 end
 
-to wander  ;; turtle procedure
+to wiggle  ;; turtle procedure
   rt random 40
   lt random 40
   if not can-move? 1 [ rt 180 ]
-  fd 1
 end
 
-to recolor  ;; turtle procedure
-  ifelse carrying-food?
-    [ set color orange + 1 ]
-    [ set color red ]
+to wiggle-to-xy
+  let direction (towardsxy coordX coordY)
+  rt random 40
+  lt random 40
+
+  if subtract-headings direction heading  > 75 [
+    set heading (direction + 285) mod 360
+  ]
+  if subtract-headings direction heading  < -75[
+    set heading (direction + 75) mod 360
+  ]
+  if not can-move? 1 [ rt 180 ]
 end
 
-to-report pheromone-scent-at-angle [ angle ]
+to-report nest-scent-at-angle [angle]
   let p patch-right-and-ahead angle 1
   if p = nobody [ report 0 ]
-  report [ pheromone ] of p
+  report [nest-scent] of p
 end
 
-to-report nest? ;; patch or turtle reporter
-  report distancexy 0 0 < 5
+to-report chemical-scent-at-angle [angle]
+  let p patch-right-and-ahead angle 1
+  if p = nobody [ report 0 ]
+  report [chemical] of p
 end
 
 
@@ -220,9 +315,9 @@ end
 ; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
-370
+257
 10
-875
+762
 516
 -1
 -1
@@ -247,10 +342,10 @@ ticks
 30.0
 
 BUTTON
-100
-55
-180
-88
+46
+71
+126
+104
 NIL
 setup
 NIL
@@ -264,10 +359,10 @@ NIL
 1
 
 SLIDER
-85
-90
-275
-123
+31
+106
+221
+139
 diffusion-rate
 diffusion-rate
 0.0
@@ -279,10 +374,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-85
-125
-275
-158
+31
+141
+221
+174
 evaporation-rate
 evaporation-rate
 0.0
@@ -294,10 +389,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-190
-55
-265
-88
+136
+71
+211
+104
 NIL
 go
 T
@@ -311,90 +406,64 @@ NIL
 0
 
 SLIDER
-85
-20
-275
-53
+31
+36
+221
+69
 population
 population
 0.0
 200.0
-125.0
+200.0
 1.0
 1
 NIL
 HORIZONTAL
 
 PLOT
-10
-180
-360
-535
-Remaining Food
-Time
-Food
+5
+197
+248
+476
+Food in each pile
+time
+food
 0.0
-10.0
+50.0
 0.0
-10.0
+120.0
 true
-true
+false
 "" ""
 PENS
-"total" 1.0 0 -16777216 true "" "plot sum [ food ] of patches"
-"right" 1.0 0 -11221820 true "" "plot sum [ food ] of patches with [ pcolor = cyan ]"
-"upper-left" 1.0 0 -13345367 true "" "plot sum [ food ] of patches with [ pcolor = blue ]"
-"lower-left" 1.0 0 -13791810 true "" "plot sum [ food ] of patches with [ pcolor = sky ]"
+"food-in-pile1" 1.0 0 -11221820 true "" "plotxy ticks sum [food] of patches with [pcolor = cyan]"
+"food-in-pile2" 1.0 0 -13791810 true "" "plotxy ticks sum [food] of patches with [pcolor = sky]"
+"food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
 
-SWITCH
-885
-10
-1012
-43
-chemical-trail
-chemical-trail
-1
-1
--1000
+CHOOSER
+772
+12
+938
+57
+foraging_strategies
+foraging_strategies
+"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging" "pheromone bomb"
+4
 
-SWITCH
-885
-60
-1032
-93
-solitary-foraging
-solitary-foraging
+CHOOSER
+773
+69
+938
+114
+food_distribution
+food_distribution
+"main blob" "sparse blobs" "random uniform"
 0
-1
--1000
-
-SLIDER
-885
-115
-1057
-148
-noise
-noise
-0
-100
-3.0
-1
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
-## ACKNOWLEDGMENT
-
-This model is from Chapter One of the book "Introduction to Agent-Based Modeling: Modeling Natural, Social and Engineered Complex Systems with NetLogo", by Uri Wilensky & William Rand.
-
-* Wilensky, U. & Rand, W. (2015). Introduction to Agent-Based Modeling: Modeling Natural, Social and Engineered Complex Systems with NetLogo. Cambridge, MA. MIT Press.
-
-This model is in the IABM Textbook folder of the NetLogo Models Library. The model, as well as any updates to the model, can also be found on the textbook website: http://www.intro-to-abm.com/.
-
 ## WHAT IS IT?
 
-In this model, a colony of ants forages for food. Though each ant follows a set of simple rules, the colony as a whole acts in a sophisticated way.
+In this project, a colony of ants forages for food. Though each ant follows a set of simple rules, the colony as a whole acts in a sophisticated way.
 
 ## HOW IT WORKS
 
@@ -420,7 +489,7 @@ The consumption of the food is shown in a plot.  The line colors in the plot mat
 
 Try different placements for the food sources. What happens if two food sources are equidistant from the nest? When that happens in the real world, ant colonies typically exploit one source then the other (not at the same time).
 
-In this model, the ants always "know" where the nest is: when they want to go back to the nest, they just turn towards the center of the world (using `facexy 0 0`). Real ants use a variety of different approaches to find their way back to the nest. Try to implement some alternative strategies.
+In this project, the ants use a "trick" to find their way back to the nest: they follow the "nest scent." Real ants use a variety of different approaches to find their way back to the nest. Try to implement some alternative strategies.
 
 The ants only respond to chemical levels between 0.05 and 2.  The lower limit is used so the ants aren't infinitely sensitive.  Try removing the upper limit.  What happens?  Why?
 
@@ -432,33 +501,17 @@ The built-in `diffuse` primitive lets us diffuse the chemical easily without com
 
 The primitive `patch-right-and-ahead` is used to make the ants smell in different directions without actually turning.
 
-## RELATED MODELS
-
-This model is a slight modification of the Ants models in the Biology section of the NetLogo models library.
-
-## CREDITS AND REFERENCES
-
-This model is a simplified version of:
-
-* Wilensky, U. (1997).  NetLogo Ants model.  http://ccl.northwestern.edu/netlogo/models/Ants.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
-
 ## HOW TO CITE
-
-This model is part of the textbook, “Introduction to Agent-Based Modeling: Modeling Natural, Social and Engineered Complex Systems with NetLogo.”
 
 If you mention this model or the NetLogo software in a publication, we ask that you include the citations below.
 
 For the model itself:
 
-* Wilensky, U. (1997).  NetLogo Ants Simple model.  http://ccl.northwestern.edu/netlogo/models/AntsSimple.  Center for Connected Learning and Computer-Based Modeling, Northwestern Institute on Complex Systems, Northwestern University, Evanston, IL.
+* Wilensky, U. (1997).  NetLogo Ants model.  http://ccl.northwestern.edu/netlogo/models/Ants.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
 Please cite the NetLogo software as:
 
 * Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
-
-Please cite the textbook as:
-
-* Wilensky, U. & Rand, W. (2015). Introduction to Agent-Based Modeling: Modeling Natural, Social and Engineered Complex Systems with NetLogo. Cambridge, MA. MIT Press.
 
 ## COPYRIGHT AND LICENSE
 
@@ -470,9 +523,13 @@ This work is licensed under the Creative Commons Attribution-NonCommercial-Share
 
 Commercial licenses are also available. To inquire about commercial licenses, please contact Uri Wilensky at uri@northwestern.edu.
 
-This model was created as part of the projects: PARTICIPATORY SIMULATIONS: NETWORK-BASED DESIGN FOR SYSTEMS LEARNING IN CLASSROOMS and/or INTEGRATED SIMULATION AND MODELING ENVIRONMENT. The project gratefully acknowledges the support of the National Science Foundation (REPP & ROLE programs) -- grant numbers REC #9814682 and REC-0126227.
+This model was created as part of the project: CONNECTED MATHEMATICS: MAKING SENSE OF COMPLEX PHENOMENA THROUGH BUILDING OBJECT-BASED PARALLEL MODELS (OBPML).  The project gratefully acknowledges the support of the National Science Foundation (Applications of Advanced Technologies Program) -- grant numbers RED #9552950 and REC #9632612.
 
-<!-- 1997 -->
+This model was developed at the MIT Media Lab using CM StarLogo.  See Resnick, M. (1994) "Turtles, Termites and Traffic Jams: Explorations in Massively Parallel Microworlds."  Cambridge, MA: MIT Press.  Adapted to StarLogoT, 1997, as part of the Connected Mathematics Project.
+
+This model was converted to NetLogo as part of the projects: PARTICIPATORY SIMULATIONS: NETWORK-BASED DESIGN FOR SYSTEMS LEARNING IN CLASSROOMS and/or INTEGRATED SIMULATION AND MODELING ENVIRONMENT. The project gratefully acknowledges the support of the National Science Foundation (REPP & ROLE programs) -- grant numbers REC #9814682 and REC-0126227. Converted from StarLogoT to NetLogo, 1998.
+
+<!-- 1997 1998 MIT -->
 @#$#@#$#@
 default
 true
@@ -773,5 +830,5 @@ true
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-1
+0
 @#$#@#$#@
