@@ -4,6 +4,7 @@ patches-own [
   nest?                ;; true on nest patches, false elsewhere
   nest-scent           ;; number that is higher closer to the nest
   food-source-number   ;; number (1, 2, or 3) to identify the food sources
+  circleInfluence      ;; making range of effect of bomb
 ]
 
 turtles-own[
@@ -34,6 +35,9 @@ end
 to setup-patches
   ask patches [
     setup-nest
+    set chemical 0
+    set circleInfluence patches in-radius 10
+    ;;show circleInfluence
     (ifelse
       food_distribution = "main blob"[
         setup-food
@@ -80,7 +84,7 @@ to recolor-patch  ;; patch procedure
       if food-source-number = 2 [ set pcolor sky  ]
       if food-source-number = 3 [ set pcolor blue ] ]
     ;; scale color to show chemical concentration
-    [ ifelse foraging_strategies = "group foraging"[
+    [ ifelse foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
       set pcolor scale-color green chemical 0.1 5 ][
       set pcolor black
   ]] ]
@@ -93,7 +97,7 @@ end
 to go  ;; forever button
   (ifelse
     foraging_strategies = "solitary foraging" [
-
+      go-solitary
     ]
     foraging_strategies = "prey chain transfer" [
       go-chain
@@ -104,8 +108,35 @@ to go  ;; forever button
     foraging_strategies = "group foraging" [
       go-chem
     ]
+    foraging_strategies = "pheromone bomb" [
+      go-chem-bomb
+    ]
   [])
+    ;; I just wanted to stop earlier
+  if all? patches [food = 0][
+    stop
+  ]
   tick
+end
+
+to go-solitary
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+        set goRandom 1
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][wiggle-to-xy]
+    ][ return-to-nest ;; carrying food? take it back to nest
+      wiggle
+    ]
+    fd 1 ]
+  ask patches [
+    recolor-patch
+  ]
 end
 
 to go-chain
@@ -113,7 +144,7 @@ to go-chain
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse color = red
     [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired position is reached
         set goRandom 1
 
       ]
@@ -164,13 +195,36 @@ to go-chem
     recolor-patch ]
 end
 
+to go-chem-bomb
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse color = red
+    [ look-for-food ;; not carrying food? look for it
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+        set goRandom 1
+      ]
+      ifelse goRandom = 1[
+        wiggle
+      ][wiggle-to-xy]
+    ][ return-to-nest ;; carrying food? take it back to nest
+      wiggle
+    ]
+    fd 1 ]
+  diffuse chemical (diffusion-rate / 100)
+  ask patches[
+    recolor-patch
+    set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
+  ]
+end
+
 to return-to-nest  ;; turtle procedure
   ifelse nest?
   [ ;; drop food and head out again
     set color red
     rt 180
     set goRandom 0
-    show timesFoodPassed
+    if foraging_strategies = "prey chain"[
+    show timesFoodPassed]
   ]
   [ if foraging_strategies = "group foraging"[
     set chemical chemical + 60]  ;; drop some chemical
@@ -181,14 +235,25 @@ to look-for-food  ;; turtle procedure
   if food > 0
   [ set color orange + 1     ;; pick up food
     set food food - 1        ;; and reduce the food source
+    if foraging_strategies = "pheromone bomb"[
+      print "bomb deployed"
+      ask patches in-radius 5 [
+        set chemical 60
+        ask circleInfluence [
+          set chemical 20 - distance myself
+        ]
+      ]
+    ]
     rt 180                   ;; and turn around
     set coordX xcor
     set coordY ycor
     set timesFoodPassed 0
+    ;;show "have food"
     stop ]
   ;; go in the direction where the chemical smell is strongest
-  if foraging_strategies = "group foraging" and (chemical >= 0.05) and (chemical < 2)
-  [ uphill-chemical ]
+  if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+    if (chemical >= 0.05) and (chemical < 2)[ uphill-chemical ]
+  ]
 end
 
 ;; sniff left and right, and go where the strongest smell is
@@ -376,20 +441,20 @@ PENS
 "food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
 
 CHOOSER
-10
-493
-176
-538
+772
+12
+938
+57
 foraging_strategies
 foraging_strategies
-"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-1
+"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging" "pheromone bomb"
+4
 
 CHOOSER
-11
-555
-176
-600
+773
+69
+938
+114
 food_distribution
 food_distribution
 "main blob" "sparse blobs" "random uniform"
