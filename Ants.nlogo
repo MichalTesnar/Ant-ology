@@ -56,53 +56,36 @@ end
 to setup-food
  let radius sqrt(food_amount / (blob_count * pi) ) ; n*pi*r^2 = food_amount -> r = sqrt(food_amount / (pi*n))
     ;; build blobs: not around the nest and not around the edges
-  ask n-of blob_count patches with [(distancexy 0 0) > (5 + radius) and abs(pxcor) < max-pxcor - radius and abs(pycor) < max-pycor - radius] [
-      ;; save nest coordinates
+  repeat blob_count [ ; blob times
+    ; pick a spot away from the nest, away from the edges, and away from spaces which have food on them
+    ask one-of patches with [(distancexy 0 0) > (5 + radius) and abs(pxcor) < max-pxcor - radius and abs(pycor) < max-pycor - radius and count patches in-radius (radius + 1) with [food > 0] = 0] [
+      ;; save patch coordinates
       let save_x pxcor
       let save_y pycor
       ;; put down food within the radius as long as you have food to put down
       ask patches with [(distancexy save_x save_y) < radius] [
-        if food_down < food_amount [
-          set food-counter food-counter + 1 ; set food source number; increase to see overlap (not needed)
+        if food_down < food_amount and food = 0 [
           set food food + 1 ; add food to the patch
           set food_down food_down + 1 ; increase global count
         ]
       ]
     ]
-    ;; put down remaining food on the existing food sources
+  ]
+    ; put down remaining food on the existing food sources
     repeat (food_amount - food_down) [
-       ask one-of patches with [food > 0] [
-          set food-counter food-counter + 1
+    ask one-of patches with [food = 0 and count neighbors4 with [food > 0] != 0] [
           set food food + 1
           set food_down food_down + 1
           ]
-  ]
+    ]
 end
-
-;to setup-food  ;; patch procedure
-;  ;; setup food source one on the right
-;  if (distancexy (0.6 * max-pxcor) 0) < 5
-;  [ set food-source-number 1 ]
-;  ;; setup food source two on the lower-left
-;  if (distancexy (-0.6 * max-pxcor) (-0.6 * max-pycor)) < 5
-;  [ set food-source-number 2 ]
-;  ;; setup food source three on the upper-left
-;  if (distancexy (-0.8 * max-pxcor) (0.8 * max-pycor)) < 5
-;  [ set food-source-number 3 ]
-;  ;; set "food" at sources to either 1 or 2, randomly
-;  if food-source-number > 0
-;  [ set food one-of [1 2] ]
-;end
 
 to recolor-patch  ;; patch procedure
   ;; give color to nest and food sources
   ifelse nest?
   [ set pcolor violet ]
   [ ifelse food > 0
-    [ if food-counter = 1 [ set pcolor cyan ]
-      if food-counter = 2 [ set pcolor sky  ]
-      if food-counter = 3 [ set pcolor blue ]
-      if food-counter > 3 [ set pcolor red ] ]
+    [ if food = 1 [ set pcolor cyan ]]
     ;; scale color to show chemical concentration
     [ ifelse foraging_strategies = "group foraging"[
       set pcolor scale-color green chemical 0.1 5 ][
@@ -115,6 +98,9 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
+  if all? patches [ food = 0 ] [
+    stop
+  ]
   (ifelse
     foraging_strategies = "solitary foraging" [
 
@@ -193,7 +179,7 @@ to return-to-nest  ;; turtle procedure
     set color red
     rt 180
     set goRandom 0
-    show timesFoodPassed
+;    show timesFoodPassed
   ]
   [ if foraging_strategies = "group foraging"[
     set chemical chemical + 60]  ;; drop some chemical
@@ -372,7 +358,7 @@ population
 population
 0.0
 200.0
-101.0
+199.0
 1.0
 1
 NIL
@@ -386,7 +372,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-1
+3
 
 TEXTBOX
 832
@@ -407,7 +393,7 @@ food_amount
 food_amount
 0
 500
-331.0
+500.0
 1
 1
 NIL
@@ -422,7 +408,7 @@ blob_count
 blob_count
 1
 200
-145.0
+178.0
 1
 1
 NIL

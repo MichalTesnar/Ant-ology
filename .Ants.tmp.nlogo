@@ -1,12 +1,16 @@
+globals [
+  food_down ;; food that has been put down already
+]
+
 patches-own [
   chemical             ;; amount of chemical on this patch
   food                 ;; amount of food on this patch (0, 1, or 2)
   nest?                ;; true on nest patches, false elsewhere
   nest-scent           ;; number that is higher closer to the nest
-  food-source-number   ;; number (1, 2, or 3) to identify the food sources
+  food-counter   ;; counter of how much food there is on the patch
 ]
 
-turtles-own[
+turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
  goRandom ;; is the movement random or targeted at X, Y
@@ -19,9 +23,10 @@ turtles-own[
 
 to setup
   clear-all
-  set-default-shape turtles "bug"
+  set-default-shape turtles "ant"
+  set food_down 0
   create-turtles population
-  [ set size 2         ;; easier to see
+  [ set size 3         ;; easier to see
     set color red      ;; red = not carrying food
     set coordX 0
     set coordY 0
@@ -32,21 +37,13 @@ to setup
 end
 
 to setup-patches
-  ask patches [
+  ask patches [ ;; setup the colony nest
     setup-nest
-    (ifelse
-      food_distribution = "main blob"[
-        setup-food
-        recolor-patch
-      ]
-      food_distribution = "sparse blobs"[
-
-      ]
-      food_distribution = "random uniform"[
-
-      ]
-      [])
      ]
+  setup-food
+  ask patches [
+    recolor-patch
+  ]
 end
 
 to setup-nest  ;; patch procedure
@@ -56,19 +53,32 @@ to setup-nest  ;; patch procedure
   set nest-scent 200 - distancexy 0 0
 end
 
-to setup-food  ;; patch procedure
-  ;; setup food source one on the right
-  if (distancexy (0.6 * max-pxcor) 0) < 5
-  [ set food-source-number 1 ]
-  ;; setup food source two on the lower-left
-  if (distancexy (-0.6 * max-pxcor) (-0.6 * max-pycor)) < 5
-  [ set food-source-number 2 ]
-  ;; setup food source three on the upper-left
-  if (distancexy (-0.8 * max-pxcor) (0.8 * max-pycor)) < 5
-  [ set food-source-number 3 ]
-  ;; set "food" at sources to either 1 or 2, randomly
-  if food-source-number > 0
-  [ set food one-of [1 2] ]
+to setup-food
+ let radius sqrt(food_amount / (blob_count * pi) ) ; n*pi*r^2 = food_amount -> r = sqrt(food_amount / (pi*n))
+    ;; build blobs: not around the nest and not around the edges
+  repeat blob_count [ ; blob times
+    ; pick a spot away from the nest, away from the edges, and away from spaces which have food on them
+    ask one-of patches with [(distancexy 0 0) > (5 + radius) and abs(pxcor) < max-pxcor - radius and abs(pycor) < max-pycor - radius and count patches in-radius (radius + 1) with [food > 0] = 0] [
+      ;; save patch coordinates
+      let save_x pxcor
+      let save_y pycor
+      ;; put down food within the radius as long as you have food to put down
+      ask patches with [(distancexy save_x save_y) < radius] [
+        if food_down < food_amount and food = 0 [
+          set food food + 1 ; add food to the patch
+          set food_down food_down + 1 ; increase global count
+        ]
+      ]
+    ]
+  ]
+    ; put down remaining food on the existing food sources
+    repeat (food_amount - food_down) [
+    ask one-of patches with [food = 0 and count neighbors4 with [food > 0] != 0] [
+          set food-counter food-counter + 1
+          set food food + 1
+          set food_down food_down + 1
+          ]
+    ]
 end
 
 to recolor-patch  ;; patch procedure
@@ -76,9 +86,7 @@ to recolor-patch  ;; patch procedure
   ifelse nest?
   [ set pcolor violet ]
   [ ifelse food > 0
-    [ if food-source-number = 1 [ set pcolor cyan ]
-      if food-source-number = 2 [ set pcolor sky  ]
-      if food-source-number = 3 [ set pcolor blue ] ]
+    [ if food = 1 [ set pcolor cyan ]]
     ;; scale color to show chemical concentration
     [ ifelse foraging_strategies = "group foraging"[
       set pcolor scale-color green chemical 0.1 5 ][
@@ -91,6 +99,9 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
+  if all? patches [ food = 0 ] [
+    stop
+  ]
   (ifelse
     foraging_strategies = "solitary foraging" [
 
@@ -115,7 +126,6 @@ to go-chain
     [ look-for-food ;; not carrying food? look for it
       if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
         set goRandom 1
-
       ]
       ifelse goRandom = 1[
         wiggle
@@ -134,7 +144,7 @@ to go-chain
 end
 
 to transfer-prey
-  if any? (turtles-on patch-here) with[color = red][
+  if any? (turtles-on patch-here) with[color = red and goRandom = 1][
     if random 100 < (100 / (timesFoodPassed + 2))[
       ask one-of ((turtles-on patch-here) with[color = red])[
         set color orange + 1
@@ -294,10 +304,10 @@ NIL
 1
 
 SLIDER
-31
-106
-221
-139
+828
+193
+1018
+226
 diffusion-rate
 diffusion-rate
 0.0
@@ -309,15 +319,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-31
-141
-221
-174
+828
+234
+1018
+267
 evaporation-rate
 evaporation-rate
 0.0
 99.0
-10.0
+11.0
 1.0
 1
 NIL
@@ -349,51 +359,71 @@ population
 population
 0.0
 200.0
-200.0
+199.0
 1.0
 1
 NIL
 HORIZONTAL
 
-PLOT
-5
-197
-248
-476
-Food in each pile
-time
-food
-0.0
-50.0
-0.0
-120.0
-true
-false
-"" ""
-PENS
-"food-in-pile1" 1.0 0 -11221820 true "" "plotxy ticks sum [food] of patches with [pcolor = cyan]"
-"food-in-pile2" 1.0 0 -13791810 true "" "plotxy ticks sum [food] of patches with [pcolor = sky]"
-"food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
-
 CHOOSER
-10
-493
-176
-538
+32
+277
+198
+322
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
+3
+
+TEXTBOX
+832
+166
+982
+184
+Chem trails\n
+14
+0.0
 1
 
-CHOOSER
-11
-555
-176
-600
-food_distribution
-food_distribution
-"main blob" "sparse blobs" "random uniform"
+SLIDER
+841
+446
+1013
+479
+food_amount
+food_amount
 0
+500
+500.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+844
+495
+1016
+528
+blob_count
+blob_count
+1
+200
+178.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+842
+360
+1030
+413
+Menu (AKA Food Options)\n
+14
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -475,6 +505,19 @@ airplane
 true
 0
 Polygon -7500403 true true 150 0 135 15 120 60 120 105 15 165 15 195 120 180 135 240 105 270 120 285 150 270 180 285 210 270 165 240 180 180 285 195 285 165 180 105 180 60 165 15
+
+ant
+true
+0
+Polygon -7500403 true true 136 61 129 46 144 30 119 45 124 60 114 82 97 37 132 10 93 36 111 84 127 105 172 105 189 84 208 35 171 11 202 35 204 37 186 82 177 60 180 44 159 32 170 44 165 60
+Polygon -7500403 true true 150 95 135 103 139 117 125 149 137 180 135 196 150 204 166 195 161 180 174 150 158 116 164 102
+Polygon -7500403 true true 149 186 128 197 114 232 134 270 149 282 166 270 185 232 171 195 149 186
+Polygon -7500403 true true 225 66 230 107 159 122 161 127 234 111 236 106
+Polygon -7500403 true true 78 58 99 116 139 123 137 128 95 119
+Polygon -7500403 true true 48 103 90 147 129 147 130 151 86 151
+Polygon -7500403 true true 65 224 92 171 134 160 135 164 95 175
+Polygon -7500403 true true 235 222 210 170 163 162 161 166 208 174
+Polygon -7500403 true true 249 107 211 147 168 147 168 150 213 150
 
 arrow
 true
