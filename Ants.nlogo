@@ -101,6 +101,9 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go
+  if all? patches [food = 0] and all? turtles [color = red or color = pink][
+    stop
+  ]
   ask turtles
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse state != "nest"
@@ -367,10 +370,6 @@ to-report chemical-scent-at-angle [angle]
   if p = nobody [ report 0 ]
   report [chemical] of p
 end
-
-
-; Copyright 1997 Uri Wilensky.
-; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
 257
@@ -486,7 +485,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging" "pheromone bomb"
-4
+2
 
 TEXTBOX
 832
