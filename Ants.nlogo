@@ -144,7 +144,6 @@ to go
         ]
       ]
       if state = "recruiting2"[
-        call-stationary
         recruit-ant
       ]
     ]
@@ -158,7 +157,9 @@ to go
     ]
     if state != "carried" and state != "recruiting2" and state != "stationary"[
       fd 1 ]
-    assign-stationary
+    if foraging_strategies = "tandem carrying"[
+      assign-stationary
+    ]
   ]
 
   if foraging_strategies = "group foraging" [
@@ -187,6 +188,7 @@ to break-link
 end
 
 to recruit-ant
+  call-stationary
   if any? turtles with [state = "stationary"] and distance (min-one-of turtles with [state = "stationary"] [distance myself]) <= 1[
           ask min-one-of turtles with [state = "stationary"][distance myself][
             rt 180
@@ -260,10 +262,11 @@ to return-to-nest  ;; turtle procedure
     rt 180
     if state = "nest"[
         set state "wiggleXY"
-      if count turtles with [state = "stationary"] < count turtles / 20[
-        set state "stationary"
-        set color pink
-      ]
+      if foraging_strategies = "tandem carrying"[
+        if count turtles with [state = "stationary"] < count turtles / 20[
+          set state "stationary"
+          set color pink
+      ]]
     ]
   ]
   [ if foraging_strategies = "group foraging"[
@@ -483,7 +486,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-2
+0
 
 TEXTBOX
 832
