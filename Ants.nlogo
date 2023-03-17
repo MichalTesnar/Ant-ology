@@ -1,13 +1,16 @@
+globals [
+  food_down ;; food that has been put down already
+]
+
 patches-own [
   chemical             ;; amount of chemical on this patch
   food                 ;; amount of food on this patch (0, 1, or 2)
   nest?                ;; true on nest patches, false elsewhere
   nest-scent           ;; number that is higher closer to the nest
-  food-source-number   ;; number (1, 2, or 3) to identify the food sources
-  circleInfluence      ;; making range of effect of bomb
+  food-counter   ;; counter of how much food there is on the patch
 ]
 
-turtles-own[
+turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
  goRandom ;; is the movement random or targeted at X, Y
@@ -34,24 +37,13 @@ to setup
 end
 
 to setup-patches
-  ask patches [
+  ask patches [ ;; setup the colony nest
     setup-nest
-    set chemical 0
-    set circleInfluence patches in-radius 10
-    ;;show circleInfluence
-    (ifelse
-      food_distribution = "main blob"[
-        setup-food
-        recolor-patch
-      ]
-      food_distribution = "sparse blobs"[
-
-      ]
-      food_distribution = "random uniform"[
-
-      ]
-      [])
      ]
+  setup-food
+  ask patches [
+    recolor-patch
+  ]
 end
 
 to setup-nest  ;; patch procedure
@@ -95,7 +87,7 @@ to recolor-patch  ;; patch procedure
   [ ifelse food > 0
     [ if food = 1 [ set pcolor cyan ]]
     ;; scale color to show chemical concentration
-    [ ifelse foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+    [ ifelse foraging_strategies = "group foraging"[
       set pcolor scale-color green chemical 0.1 5 ][
       set pcolor black
   ]] ]
@@ -111,7 +103,7 @@ to go  ;; forever button
   ]
   (ifelse
     foraging_strategies = "solitary foraging" [
-      go-solitary
+
     ]
     foraging_strategies = "prey chain transfer" [
       go-chain
@@ -122,35 +114,8 @@ to go  ;; forever button
     foraging_strategies = "group foraging" [
       go-chem
     ]
-    foraging_strategies = "pheromone bomb" [
-      go-chem-bomb
-    ]
   [])
-    ;; I just wanted to stop earlier
-  if all? patches [food = 0][
-    stop
-  ]
   tick
-end
-
-to go-solitary
-  ask turtles
-  [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
-    [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
-        set goRandom 1
-      ]
-      ifelse goRandom = 1[
-        wiggle
-      ][wiggle-to-xy]
-    ][ return-to-nest ;; carrying food? take it back to nest
-      wiggle
-    ]
-    fd 1 ]
-  ask patches [
-    recolor-patch
-  ]
 end
 
 to go-chain
@@ -158,9 +123,8 @@ to go-chain
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse color = red
     [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired position is reached
+      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
         set goRandom 1
-
       ]
       ifelse goRandom = 1[
         wiggle
@@ -209,36 +173,13 @@ to go-chem
     recolor-patch ]
 end
 
-to go-chem-bomb
-  ask turtles
-  [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
-    [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
-        set goRandom 1
-      ]
-      ifelse goRandom = 1[
-        wiggle
-      ][wiggle-to-xy]
-    ][ return-to-nest ;; carrying food? take it back to nest
-      wiggle
-    ]
-    fd 1 ]
-  diffuse chemical (diffusion-rate / 100)
-  ask patches[
-    recolor-patch
-    set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
-  ]
-end
-
 to return-to-nest  ;; turtle procedure
   ifelse nest?
   [ ;; drop food and head out again
     set color red
     rt 180
     set goRandom 0
-    if foraging_strategies = "prey chain"[
-    show timesFoodPassed]
+;    show timesFoodPassed
   ]
   [ if foraging_strategies = "group foraging"[
     set chemical chemical + 60]  ;; drop some chemical
@@ -249,25 +190,14 @@ to look-for-food  ;; turtle procedure
   if food > 0
   [ set color orange + 1     ;; pick up food
     set food food - 1        ;; and reduce the food source
-    if foraging_strategies = "pheromone bomb"[
-      print "bomb deployed"
-      ask patches in-radius 5 [
-        set chemical 60
-        ask circleInfluence [
-          set chemical 20 - distance myself
-        ]
-      ]
-    ]
     rt 180                   ;; and turn around
     set coordX xcor
     set coordY ycor
     set timesFoodPassed 0
-    ;;show "have food"
     stop ]
   ;; go in the direction where the chemical smell is strongest
-  if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
-    if (chemical >= 0.05) and (chemical < 2)[ uphill-chemical ]
-  ]
+  if foraging_strategies = "group foraging" and (chemical >= 0.05) and (chemical < 2)
+  [ uphill-chemical ]
 end
 
 ;; sniff left and right, and go where the strongest smell is
@@ -373,10 +303,10 @@ NIL
 1
 
 SLIDER
-31
-106
-221
-139
+828
+193
+1018
+226
 diffusion-rate
 diffusion-rate
 0.0
@@ -388,15 +318,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-31
-141
-221
-174
+828
+234
+1018
+267
 evaporation-rate
 evaporation-rate
 0.0
 99.0
-10.0
+11.0
 1.0
 1
 NIL
@@ -428,50 +358,39 @@ population
 population
 0.0
 200.0
-200.0
+199.0
 1.0
 1
 NIL
 HORIZONTAL
 
-PLOT
-5
-197
-248
-476
-Food in each pile
-time
-food
-0.0
-50.0
-0.0
-120.0
-true
-false
-"" ""
-PENS
-"food-in-pile1" 1.0 0 -11221820 true "" "plotxy ticks sum [food] of patches with [pcolor = cyan]"
-"food-in-pile2" 1.0 0 -13791810 true "" "plotxy ticks sum [food] of patches with [pcolor = sky]"
-"food-in-pile3" 1.0 0 -13345367 true "" "plotxy ticks sum [food] of patches with [pcolor = blue]"
-
 CHOOSER
-772
-12
-938
-57
+32
+277
+198
+322
 foraging_strategies
 foraging_strategies
-"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging" "pheromone bomb"
-4
+"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
+3
 
-CHOOSER
-773
-69
-938
-114
-food_distribution
-food_distribution
-"main blob" "sparse blobs" "random uniform"
+TEXTBOX
+832
+166
+982
+184
+Chem trails\n
+14
+0.0
+1
+
+SLIDER
+841
+446
+1013
+479
+food_amount
+food_amount
 0
 500
 500.0
