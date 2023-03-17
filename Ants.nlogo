@@ -1,5 +1,8 @@
 globals [
   food_down ;; food that has been put down already
+  diffusion-rate
+  evaporation-rate
+  vision-radius
 ]
 
 patches-own [
@@ -26,6 +29,9 @@ to setup
   clear-all
   set-default-shape turtles "ant"
   set food_down 0
+  set diffusion-rate 50
+  set evaporation-rate 11
+  set vision-radius 3
   create-turtles population
   [ set size 3         ;; easier to see
     set color red      ;; red = not carrying food
@@ -90,7 +96,7 @@ to recolor-patch  ;; patch procedure
   [ ifelse food > 0
     [ if food = 1 [ set pcolor cyan ]]
     ;; scale color to show chemical concentration
-    [ ifelse foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb" [
+    [ ifelse foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb" [
       set pcolor scale-color green chemical 0.1 5 ][
       set pcolor black
   ]] ]
@@ -151,12 +157,12 @@ to go
     ]
   ]
 
-  if foraging_strategies = "group foraging" [
+  if foraging_strategies = "pheromone trails" [
     diffuse chemical (diffusion-rate / 100)
   ]
   ask patches [
     recolor-patch
-    if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+    if foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb"[
      set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
     ]
   ]
@@ -258,7 +264,7 @@ to return-to-nest  ;; turtle procedure
       ]]
     ]
   ]
-  [ if foraging_strategies = "group foraging"[
+  [ if foraging_strategies = "pheromone trails"[
       set chemical chemical + 60]  ;; drop some chemical
     wiggle-to-0 ]         ;; head toward the nest
 end
@@ -288,7 +294,7 @@ to look-for-food  ;; turtle procedure
         set timesFoodPassed 0
         stop ]]]
   ;; go in the direction where the chemical smell is strongest
-  if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
+  if foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb"[
     if (chemical >= 0.05) and (chemical < 2)[ uphill-chemical ]
   ]
 end
@@ -415,36 +421,6 @@ NIL
 NIL
 1
 
-SLIDER
-828
-193
-1018
-226
-diffusion-rate
-diffusion-rate
-0.0
-99.0
-50.0
-1.0
-1
-NIL
-HORIZONTAL
-
-SLIDER
-828
-234
-1018
-267
-evaporation-rate
-evaporation-rate
-0.0
-99.0
-11.0
-1.0
-1
-NIL
-HORIZONTAL
-
 BUTTON
 136
 71
@@ -478,30 +454,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-32
-277
-198
-322
+43
+205
+209
+250
 foraging_strategies
 foraging_strategies
-"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging" "pheromone bomb"
-2
-
-TEXTBOX
-832
-166
-982
-184
-Chem trails\n
-14
-0.0
-1
+"solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
+3
 
 SLIDER
-841
-446
-1013
-479
+39
+118
+211
+151
 food_amount
 food_amount
 0
@@ -513,40 +479,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-844
-495
-1016
-528
+38
+160
+210
+193
 blob_count
 blob_count
 1
 200
-6.0
-1
-1
-NIL
-HORIZONTAL
-
-TEXTBOX
-842
-360
-1030
-413
-Menu (AKA Food Options)\n
-14
-0.0
-1
-
-SLIDER
-42
-114
-214
-147
-vision-radius
-vision-radius
-0
-10
-3.0
+7.0
 1
 1
 NIL
