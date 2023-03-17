@@ -153,7 +153,7 @@ to go
   ]
   ask patches [
     recolor-patch
-    if foraging_strategies = "group foraging" [
+    if foraging_strategies = "group foraging" or foraging_strategies = "pheromone bomb"[
      set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
     ]
   ]
@@ -258,28 +258,6 @@ to return-to-nest  ;; turtle procedure
   [ if foraging_strategies = "group foraging"[
       set chemical chemical + 60]  ;; drop some chemical
     wiggle-to-0 ]         ;; head toward the nest
-end
-
-to go-chem-bomb
-  ask turtles
-  [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
-    [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
-        set goRandom 1
-      ]
-      ifelse goRandom = 1[
-        wiggle
-      ][wiggle-to-xy]
-    ][ return-to-nest ;; carrying food? take it back to nest
-      wiggle
-    ]
-    fd 1 ]
-  diffuse chemical (diffusion-rate / 100)
-  ask patches[
-    recolor-patch
-    set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
-  ]
 end
 
 to look-for-food  ;; turtle procedure
