@@ -121,7 +121,7 @@ to go
         set state "random"
         break-link
       ]
-      if state = "random"[
+      if state = "random" [
         set color red
         wiggle
         detect-food
@@ -132,18 +132,18 @@ to go
         detect-food
       ]
       if state = "recruiting1"[
-        ifelse distancexy 0 0 < 5 [
+        ifelse distancexy 0 0 < 5 [ ;; become stationary when in the nest
           set state "recruiting2"
         ][
-          wiggle-to-0
+          wiggle-to-0 ;; approach the nest
         ]
       ]
       if state = "recruiting2"[
-        recruit-ant
+        recruit-ant ;; send a signal to recruit a stationary ant in the nest
       ]
     ]
     [
-      if state = "nest"[
+      if state = "nest"[ ;; coming back to the nest with food
         return-to-nest ;; carrying food? take it back to nest
         if foraging_strategies = "prey chain transfer"[
           transfer-prey
@@ -153,7 +153,7 @@ to go
     if state != "carried" and state != "recruiting2" and state != "stationary"[
       fd 1 ]
     if foraging_strategies = "tandem carrying"[
-      assign-stationary
+      assign-stationary ;; randomly walking ants can become stationary ants if they happen to stumble on the nest
     ]
   ]
 
@@ -169,7 +169,7 @@ to go
   tick
 end
 
-to break-link
+to break-link ;; assigns random state to itself and the linked ants
   set state "random"
   ask my-links [ask other-end[
     set state "random"
@@ -183,31 +183,31 @@ to break-link
 end
 
 to recruit-ant
-  call-stationary
-  if any? turtles with [state = "stationary"] and distance (min-one-of turtles with [state = "stationary"] [distance myself]) <= 1[
-          ask min-one-of turtles with [state = "stationary"][distance myself][
+  call-stationary ;; make the stationary ant appraoch self
+  if any? turtles with [state = "stationary"] and distance (min-one-of turtles with [state = "stationary"] [distance myself]) <= 1[ ;; if a stationary ant is close
+          ask min-one-of turtles with [state = "stationary"][distance myself][ ;; ask the ant to turn around and be carried
             rt 180
             set state "carried"
             set color green
           ]
-          create-link-to min-one-of turtles with [state = "carried"][distance myself] [tie]
-          set state "wiggleXY"
+          create-link-to min-one-of turtles with [state = "carried"][distance myself] [tie] ;; link to the stationary ant
+          set state "wiggleXY" ;; go to the location of interest with the carried ant attached
 
         ]
 end
 
-to detect-food
+to detect-food ;; sets heading of the ant towards the nearest food source in the vision radius
   if any? patches with [food > 0] and distance (min-one-of patches with [food > 0] [distance myself]) < vision-radius[
     set heading towards min-one-of patches with [food > 0] [distance myself]
   ]
 end
 
 to transfer-prey
-  if timesFoodPassed < 2 and state = "nest" [
-  approach-ant
-  ]
-  if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) <= 1[
-    if random 100 < (100 / (timesFoodPassed + 2))[
+  if random 100 < (100 / (timesFoodPassed + 2))[ ;; the chance of attempting to pass the carried food decreases with the number the food was passed
+    if timesFoodPassed < 2 and state = "nest" [ ;; because of the small map size and high concentration of ants, we are limiting the initiative to approach ants at some point
+      approach-ant
+    ]
+    if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) <= 1[ ;; another ant close enough to pass food
       ask min-one-of turtles with [state = "random"][distance myself][
         set color orange + 1
         set coordX xcor
@@ -217,7 +217,7 @@ to transfer-prey
         show timesFoodPassed
         rt 180
       ]
-      set color red
+      set color red - 2
       rt 180
       set state "wiggleXY"
     ]
@@ -225,15 +225,15 @@ to transfer-prey
 end
 
 to approach-ant
-  if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) < vision-radius[
-    set heading towards min-one-of turtles with [state = "random"][distance myself]
+  if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) < vision-radius[ ;; is there a wandering ant in the vision radius?
+    set heading towards min-one-of turtles with [state = "random"][distance myself] ;; turn towards that ant
     ask min-one-of turtles with [state = "random" ][distance myself][
-      set heading towards myself
+      set heading towards myself ;; turn that ant towards myself
     ]
   ]
 end
 
-to call-stationary
+to call-stationary ;; makes a stationary ant approach the caller
   if any? turtles with [state = "stationary"][
     set heading towards min-one-of turtles with [state = "stationary"][distance myself]
     ask min-one-of turtles with [state = "stationary" ][distance myself][
