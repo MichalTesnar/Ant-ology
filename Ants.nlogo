@@ -114,7 +114,7 @@ to go
   [ if who >= ticks [ stop ] ;; delay initial departure
     ifelse state != "nest"
     [ look-for-food ;; not carrying food? look for it
-      if state = "carried" and count my-links = 0[
+      if state = "carried" and (count my-links != 1)[
       break-link
       ]
       if distancexy coordX coordY < vision-radius and state = "wiggleXY" [ ;; The movement is once again randomised after the desired position is seen
