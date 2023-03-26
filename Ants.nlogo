@@ -258,7 +258,7 @@ to return-to-nest  ;; turtle procedure
     if state = "nest"[
         set state "wiggleXY"
       if foraging_strategies = "tandem carrying"[
-        if count turtles with [state = "stationary"] < count turtles / 20[
+        if count turtles with [state = "stationary"] < count turtles / 10[
           set state "stationary"
           set color pink
       ]]
@@ -273,8 +273,8 @@ to look-for-food  ;; turtle procedure
   if food > 0
   [
     break-link
-    ifelse foraging_strategies = "tandem carrying" and count (patches with [food > 0 and distance myself < vision-radius]) > 2 and random 100 < 80
-    and count other turtles with [state = "recruiting2" or state = "recruiting1"] < count turtles with [state = "random"] / 4[
+    ifelse foraging_strategies = "tandem carrying" and count (patches with [food > 0 and distance myself < vision-radius]) > 2 and random 100 < 75
+    and count other turtles with [state = "recruiting2" or state = "recruiting1"] < count turtles with [state = "stationary"] * 2[
       set state "recruiting1"
       set color blue
       set coordX xcor
