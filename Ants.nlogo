@@ -30,7 +30,7 @@ to setup
   set-default-shape turtles "ant"
   set food_down 0
   set diffusion-rate 50
-  set evaporation-rate 11
+  set evaporation-rate 10
   set vision-radius 3
   create-turtles population
   [ set size 3         ;; easier to see
