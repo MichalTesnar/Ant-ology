@@ -472,7 +472,7 @@ food_amount
 food_amount
 0
 500
-111.0
+300.0
 1
 1
 NIL
@@ -487,7 +487,7 @@ blob_count
 blob_count
 1
 200
-7.0
+51.0
 1
 1
 NIL
@@ -863,6 +863,73 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="pheromone trails" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;pheromone trails&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="solitary foraging" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;solitary foraging&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="prey chain transfer" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;prey chain transfer&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="tandem carrying" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;tandem carrying&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="pheromone bomb" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;pheromone bomb&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
