@@ -472,7 +472,7 @@ food_amount
 food_amount
 0
 500
-120.0
+270.0
 1
 1
 NIL
@@ -487,7 +487,7 @@ blob_count
 blob_count
 1
 200
-1.0
+51.0
 1
 1
 NIL
@@ -864,9 +864,10 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="pheromone trails" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="pheromone trails" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <timeLimit steps="10000"/>
     <metric>ticks</metric>
     <enumeratedValueSet variable="foraging_strategies">
       <value value="&quot;pheromone trails&quot;"/>
@@ -877,9 +878,10 @@ NetLogo 6.2.2
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="solitary foraging" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="solitary foraging" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <timeLimit steps="10000"/>
     <metric>ticks</metric>
     <enumeratedValueSet variable="foraging_strategies">
       <value value="&quot;solitary foraging&quot;"/>
@@ -890,9 +892,10 @@ NetLogo 6.2.2
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="prey chain transfer" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="prey chain transfer" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <timeLimit steps="10000"/>
     <metric>ticks</metric>
     <enumeratedValueSet variable="foraging_strategies">
       <value value="&quot;prey chain transfer&quot;"/>
@@ -903,9 +906,10 @@ NetLogo 6.2.2
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="tandem carrying" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="tandem carrying" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <timeLimit steps="10000"/>
     <metric>ticks</metric>
     <enumeratedValueSet variable="foraging_strategies">
       <value value="&quot;tandem carrying&quot;"/>
@@ -916,7 +920,7 @@ NetLogo 6.2.2
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="pheromone bomb" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="pheromone bomb" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <metric>ticks</metric>
