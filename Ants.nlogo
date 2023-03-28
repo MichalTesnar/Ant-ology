@@ -214,7 +214,7 @@ to transfer-prey
         set coordY ycor
         set state "nest"
         set timesFoodPassed ([timesFoodPassed] of myself) + 1
-        show timesFoodPassed
+;        show timesFoodPassed
         rt 180
       ]
       set color red - 2
@@ -300,7 +300,7 @@ to look-for-food  ;; turtle procedure
 end
 
 to deploy-bomb
-  print "bomb deployed"
+;  print "bomb deployed"
   ask patches in-radius 5 [
     set chemical 60
     ask circleInfluence [
@@ -461,7 +461,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
-3
+4
 
 SLIDER
 39
@@ -472,7 +472,7 @@ food_amount
 food_amount
 0
 500
-300.0
+120.0
 1
 1
 NIL
@@ -487,7 +487,7 @@ blob_count
 blob_count
 1
 200
-51.0
+1.0
 1
 1
 NIL
