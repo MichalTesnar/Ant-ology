@@ -879,7 +879,7 @@ setup</setup>
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
   </experiment>
   <experiment name="solitary foraging" repetitions="1" runMetricsEveryStep="false">
     <setup>random-seed food_amount + 1000 * blob_count + salt
@@ -895,7 +895,7 @@ setup</setup>
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
   </experiment>
   <experiment name="prey chain transfer" repetitions="1" runMetricsEveryStep="false">
     <setup>random-seed food_amount + 1000 * blob_count + salt
@@ -911,7 +911,7 @@ setup</setup>
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
   </experiment>
   <experiment name="tandem carrying" repetitions="1" runMetricsEveryStep="false">
     <setup>random-seed food_amount + 1000 * blob_count + salt
@@ -927,7 +927,7 @@ setup</setup>
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
   </experiment>
   <experiment name="pheromone bomb" repetitions="1" runMetricsEveryStep="false">
     <setup>random-seed food_amount + 1000 * blob_count + salt
@@ -942,7 +942,7 @@ setup</setup>
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
   </experiment>
 </experiments>
 @#$#@#$#@
