@@ -3,6 +3,7 @@ globals [
   diffusion-rate
   evaporation-rate
   vision-radius
+  salt
 ]
 
 patches-own [
@@ -461,7 +462,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
-4
+3
 
 SLIDER
 39
@@ -472,7 +473,7 @@ food_amount
 food_amount
 0
 500
-270.0
+30.0
 1
 1
 NIL
@@ -487,7 +488,7 @@ blob_count
 blob_count
 1
 200
-51.0
+5.0
 1
 1
 NIL
@@ -864,8 +865,9 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="pheromone trails" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="pheromone trails" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
     <go>go</go>
     <timeLimit steps="10000"/>
     <metric>ticks</metric>
@@ -877,9 +879,11 @@ NetLogo 6.2.2
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
   </experiment>
-  <experiment name="solitary foraging" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="solitary foraging" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
     <go>go</go>
     <timeLimit steps="10000"/>
     <metric>ticks</metric>
@@ -891,9 +895,11 @@ NetLogo 6.2.2
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
   </experiment>
-  <experiment name="prey chain transfer" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="prey chain transfer" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
     <go>go</go>
     <timeLimit steps="10000"/>
     <metric>ticks</metric>
@@ -905,9 +911,11 @@ NetLogo 6.2.2
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
   </experiment>
-  <experiment name="tandem carrying" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="tandem carrying" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
     <go>go</go>
     <timeLimit steps="10000"/>
     <metric>ticks</metric>
@@ -919,9 +927,11 @@ NetLogo 6.2.2
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
   </experiment>
-  <experiment name="pheromone bomb" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="pheromone bomb" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
     <go>go</go>
     <metric>ticks</metric>
     <enumeratedValueSet variable="foraging_strategies">
@@ -932,6 +942,7 @@ NetLogo 6.2.2
     <enumeratedValueSet variable="population">
       <value value="100"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="270000"/>
   </experiment>
 </experiments>
 @#$#@#$#@
