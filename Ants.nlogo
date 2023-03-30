@@ -462,7 +462,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
-3
+1
 
 SLIDER
 39
@@ -473,7 +473,7 @@ food_amount
 food_amount
 0
 500
-30.0
+300.0
 1
 1
 NIL
@@ -488,7 +488,7 @@ blob_count
 blob_count
 1
 200
-5.0
+51.0
 1
 1
 NIL
