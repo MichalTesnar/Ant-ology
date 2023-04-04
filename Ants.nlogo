@@ -34,11 +34,12 @@ to setup
   set evaporation-rate 10
   set vision-radius 3
   create-turtles population
-  [ set size 3         ;; easier to see
+  [ set size 10         ;; easier to see
     set color red      ;; red = not carrying food
     set coordX 0
     set coordY 0
     set state "random"
+    pen-down
   ]
   setup-patches
   reset-ticks
@@ -448,7 +449,7 @@ population
 population
 0.0
 200.0
-100.0
+1.0
 1.0
 1
 NIL
@@ -462,7 +463,7 @@ CHOOSER
 foraging_strategies
 foraging_strategies
 "solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
-1
+3
 
 SLIDER
 39
@@ -473,7 +474,7 @@ food_amount
 food_amount
 0
 500
-300.0
+137.0
 1
 1
 NIL
@@ -488,7 +489,7 @@ blob_count
 blob_count
 1
 200
-51.0
+1.0
 1
 1
 NIL
