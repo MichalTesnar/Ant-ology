@@ -401,22 +401,22 @@ to fade ; frag procedure
 end
 
 
-to go-chain
-  ask turtles
-  [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
-    [ look-for-food ;; not carrying food? look for it
-      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
-        set goRandom 1
-      ]
-      ifelse goRandom = 1[
-        wiggle
-      ][
-        wiggle-to-xy
-      ]
-  ]
-  ]
-end
+;to go-chain
+;  ask turtles
+;  [ if who >= ticks [ stop ] ;; delay initial departure
+;    ifelse color = red [
+;    [ look-for-food ;; not carrying food? look for it
+;      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+;        set goRandom 1
+;      ]
+;      ifelse goRandom = 1[
+;        wiggle
+;      ][
+;        wiggle-to-xy
+;      ]
+;  ]
+;  ]
+;end
 
 to break-link ;; assigns random state to itself and the linked ants
   set state "random"
