@@ -1,2 +1,6 @@
 
 *.tmp.nlogo
+.Ants.tmp.nlogo
+.Rhistory
+.RData
+.DS_Store
