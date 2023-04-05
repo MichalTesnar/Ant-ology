@@ -2,10 +2,29 @@ extensions [sound] ;extend this, if you want
 
 globals [
   food_down ;; food that has been put down already
+  max-fireworks
+  initial-x-vel
+  initial-y-vel
+  gravity
+  fragments
+  trails?
+  fade-amount
   diffusion-rate
   evaporation-rate
   vision-radius
   salt
+]
+
+breed [ rockets rocket ]
+breed [ frags frag ]
+
+
+rockets-own [
+  terminal-y-vel  ; velocity at which rocket will explode
+]
+
+frags-own [
+  dim             ; used for fading particles
 ]
 
 patches-own [
@@ -21,6 +40,9 @@ turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
  timesFoodPassed
+ col             ; sets color of an explosion particle
+ x-vel           ; x-velocity
+ y-vel           ; y-velocity
  state ;; 'random', 'wiggleXY', "nest", "recruiting1", "recriuting2", "carried", "stationary"
 ]
 
@@ -240,6 +262,7 @@ end
 
 to go
   if all? patches [food = 0] and all? turtles [color = red or color = pink][
+    launch-fireworks
     stop
   ]
   ask turtles
@@ -300,6 +323,100 @@ to go
   ]
   tick
 end
+
+to launch-fireworks
+  clear-all
+  reset-ticks
+  set-default-shape turtles "circle"
+  set max-fireworks 20
+  set initial-x-vel 1.2
+  set initial-y-vel 1.2
+  set gravity 0.5
+  set fragments 20
+  set trails? true
+  set fade-amount 2
+  init-rockets
+  repeat 50 [
+    ask turtles [
+      projectile-motion
+      ]
+    tick
+  ]
+end
+
+
+to init-rockets
+  clear-drawing
+  create-rockets max-fireworks [
+    setxy random-xcor min-pycor
+    set x-vel ((random-float (2 * initial-x-vel)) - (initial-x-vel))
+    set y-vel ((random-float initial-y-vel) + initial-y-vel * 2)
+    set col one-of base-colors
+    set color (col + 2)
+    set size 2
+    set terminal-y-vel (random-float 4.0) ; at what speed does the rocket explode?
+  ]
+end
+
+; This function simulates the actual free-fall motion of the turtles.
+; If a turtle is a rocket it checks if it has slowed down enough to explode.
+to projectile-motion ; turtle procedure
+  set y-vel (y-vel - (gravity / 5))
+  set heading (atan x-vel y-vel)
+  let move-amount (sqrt ((x-vel ^ 2) + (y-vel ^ 2)))
+  if not can-move? move-amount [ die ]
+  fd (sqrt ((x-vel ^ 2) + (y-vel ^ 2)))
+
+  ifelse (breed = rockets) [
+    if (y-vel < terminal-y-vel) [
+      explode
+      die
+    ]
+  ] [
+    fade
+  ]
+end
+
+; This is where the explosion is created.
+; EXPLODE calls hatch a number of times indicated by the slider FRAGMENTS.
+to explode ; turtle procedure
+  hatch-frags fragments [
+    set dim 0
+    rt random 360
+    set size 1
+    set x-vel (x-vel * .5 + dx + (random-float 2.0) - 1)
+    set y-vel (y-vel * .3 + dy + (random-float 2.0) - 1)
+    ifelse trails?
+      [ pen-down ]
+      [ pen-up ]
+  ]
+end
+
+; This function changes the color of a frag.
+; Each frag fades its color by an amount proportional to FADE-AMOUNT.
+to fade ; frag procedure
+  set dim dim - (fade-amount / 10)
+  set color scale-color col dim -5 .5
+  if (color < (col - 3.5)) [ die ]
+end
+
+
+;to go-chain
+;  ask turtles
+;  [ if who >= ticks [ stop ] ;; delay initial departure
+;    ifelse color = red [
+;    [ look-for-food ;; not carrying food? look for it
+;      if distancexy coordX coordY < 5 [ ;; The movement is once again randomised after the desired positino is reached
+;        set goRandom 1
+;      ]
+;      ifelse goRandom = 1[
+;        wiggle
+;      ][
+;        wiggle-to-xy
+;      ]
+;  ]
+;  ]
+;end
 
 to break-link ;; assigns random state to itself and the linked ants
   set state "random"
