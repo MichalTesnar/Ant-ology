@@ -1,3 +1,5 @@
+extensions [sound] ;extend this, if you want
+
 globals [
   food_down ;; food that has been put down already
   max-fireworks
@@ -7,6 +9,10 @@ globals [
   fragments
   trails?
   fade-amount
+  diffusion-rate
+  evaporation-rate
+  vision-radius
+  salt
 ]
 
 breed [ rockets rocket ]
@@ -27,16 +33,17 @@ patches-own [
   nest?                ;; true on nest patches, false elsewhere
   nest-scent           ;; number that is higher closer to the nest
   food-counter   ;; counter of how much food there is on the patch
+  circleInfluence      ;; making range of effect of bomb
 ]
 
 turtles-own [
  coordX ;; x coordinate of a place of interest
  coordY ;; y coordinate of a place of interest
- goRandom ;; is the movement random or targeted at X, Y
  timesFoodPassed
  col             ; sets color of an explosion particle
  x-vel           ; x-velocity
  y-vel           ; y-velocity
+ state ;; 'random', 'wiggleXY', "nest", "recruiting1", "recriuting2", "carried", "stationary"
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,15 +51,147 @@ turtles-own [
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup
+  sound:stop-music
+  sound:play-sound-later "sounds/0_sound.wav" 0
+  sound:play-sound-later "sounds/1_sound.wav" 1
+  sound:play-sound-later "sounds/2_sound.wav" 2
+  sound:play-sound-later "sounds/3_sound.wav" 3
+  sound:play-sound-later "sounds/4_sound.wav" 4
+  sound:play-sound-later "sounds/5_sound.wav" 5
+  sound:play-sound-later "sounds/6_sound.wav" 6
+  sound:play-sound-later "sounds/7_sound.wav" 7
+  sound:play-sound-later "sounds/8_sound.wav" 8
+  sound:play-sound-later "sounds/9_sound.wav" 9
+  sound:play-sound-later "sounds/10_sound.wav" 10
+  sound:play-sound-later "sounds/11_sound.wav" 11
+  sound:play-sound-later "sounds/12_sound.wav" 12
+  sound:play-sound-later "sounds/13_sound.wav" 13
+  sound:play-sound-later "sounds/14_sound.wav" 14
+  sound:play-sound-later "sounds/15_sound.wav" 15
+  sound:play-sound-later "sounds/16_sound.wav" 16
+  sound:play-sound-later "sounds/17_sound.wav" 17
+  sound:play-sound-later "sounds/18_sound.wav" 18
+  sound:play-sound-later "sounds/19_sound.wav" 19
+  sound:play-sound-later "sounds/20_sound.wav" 20
+  sound:play-sound-later "sounds/21_sound.wav" 21
+  sound:play-sound-later "sounds/22_sound.wav" 22
+  sound:play-sound-later "sounds/23_sound.wav" 23
+  sound:play-sound-later "sounds/24_sound.wav" 24
+  sound:play-sound-later "sounds/25_sound.wav" 25
+  sound:play-sound-later "sounds/26_sound.wav" 26
+  sound:play-sound-later "sounds/27_sound.wav" 27
+  sound:play-sound-later "sounds/28_sound.wav" 28
+  sound:play-sound-later "sounds/29_sound.wav" 29
+  sound:play-sound-later "sounds/30_sound.wav" 30
+  sound:play-sound-later "sounds/31_sound.wav" 31
+  sound:play-sound-later "sounds/32_sound.wav" 32
+  sound:play-sound-later "sounds/33_sound.wav" 33
+  sound:play-sound-later "sounds/34_sound.wav" 34
+  sound:play-sound-later "sounds/35_sound.wav" 35
+  sound:play-sound-later "sounds/36_sound.wav" 36
+  sound:play-sound-later "sounds/37_sound.wav" 37
+  sound:play-sound-later "sounds/38_sound.wav" 38
+  sound:play-sound-later "sounds/39_sound.wav" 39
+  sound:play-sound-later "sounds/40_sound.wav" 40
+  sound:play-sound-later "sounds/41_sound.wav" 41
+  sound:play-sound-later "sounds/42_sound.wav" 42
+  sound:play-sound-later "sounds/43_sound.wav" 43
+  sound:play-sound-later "sounds/44_sound.wav" 44
+  sound:play-sound-later "sounds/45_sound.wav" 45
+  sound:play-sound-later "sounds/46_sound.wav" 46
+  sound:play-sound-later "sounds/47_sound.wav" 47
+  sound:play-sound-later "sounds/48_sound.wav" 48
+  sound:play-sound-later "sounds/49_sound.wav" 49
+  sound:play-sound-later "sounds/50_sound.wav" 50
+  sound:play-sound-later "sounds/51_sound.wav" 51
+  sound:play-sound-later "sounds/52_sound.wav" 52
+  sound:play-sound-later "sounds/53_sound.wav" 53
+  sound:play-sound-later "sounds/54_sound.wav" 54
+  sound:play-sound-later "sounds/55_sound.wav" 55
+  sound:play-sound-later "sounds/56_sound.wav" 56
+  sound:play-sound-later "sounds/57_sound.wav" 57
+  sound:play-sound-later "sounds/58_sound.wav" 58
+  sound:play-sound-later "sounds/59_sound.wav" 59
+  sound:play-sound-later "sounds/60_sound.wav" 60
+  sound:play-sound-later "sounds/61_sound.wav" 61
+  sound:play-sound-later "sounds/62_sound.wav" 62
+  sound:play-sound-later "sounds/63_sound.wav" 63
+  sound:play-sound-later "sounds/64_sound.wav" 64
+  sound:play-sound-later "sounds/65_sound.wav" 65
+  sound:play-sound-later "sounds/66_sound.wav" 66
+  sound:play-sound-later "sounds/67_sound.wav" 67
+  sound:play-sound-later "sounds/68_sound.wav" 68
+  sound:play-sound-later "sounds/69_sound.wav" 69
+  sound:play-sound-later "sounds/70_sound.wav" 70
+  sound:play-sound-later "sounds/71_sound.wav" 71
+  sound:play-sound-later "sounds/72_sound.wav" 72
+  sound:play-sound-later "sounds/73_sound.wav" 73
+  sound:play-sound-later "sounds/74_sound.wav" 74
+  sound:play-sound-later "sounds/75_sound.wav" 75
+  sound:play-sound-later "sounds/76_sound.wav" 76
+  sound:play-sound-later "sounds/77_sound.wav" 77
+  sound:play-sound-later "sounds/78_sound.wav" 78
+  sound:play-sound-later "sounds/79_sound.wav" 79
+  sound:play-sound-later "sounds/80_sound.wav" 80
+  sound:play-sound-later "sounds/81_sound.wav" 81
+  sound:play-sound-later "sounds/82_sound.wav" 82
+  sound:play-sound-later "sounds/83_sound.wav" 83
+  sound:play-sound-later "sounds/84_sound.wav" 84
+  sound:play-sound-later "sounds/85_sound.wav" 85
+  sound:play-sound-later "sounds/86_sound.wav" 86
+  sound:play-sound-later "sounds/87_sound.wav" 87
+  sound:play-sound-later "sounds/88_sound.wav" 88
+  sound:play-sound-later "sounds/89_sound.wav" 89
+  sound:play-sound-later "sounds/90_sound.wav" 90
+  sound:play-sound-later "sounds/91_sound.wav" 91
+  sound:play-sound-later "sounds/92_sound.wav" 92
+  sound:play-sound-later "sounds/93_sound.wav" 93
+  sound:play-sound-later "sounds/94_sound.wav" 94
+  sound:play-sound-later "sounds/95_sound.wav" 95
+  sound:play-sound-later "sounds/96_sound.wav" 96
+  sound:play-sound-later "sounds/97_sound.wav" 97
+  sound:play-sound-later "sounds/98_sound.wav" 98
+  sound:play-sound-later "sounds/99_sound.wav" 99
+  sound:play-sound-later "sounds/100_sound.wav" 100
+  sound:play-sound-later "sounds/101_sound.wav" 101
+  sound:play-sound-later "sounds/102_sound.wav" 102
+  sound:play-sound-later "sounds/103_sound.wav" 103
+  sound:play-sound-later "sounds/104_sound.wav" 104
+  sound:play-sound-later "sounds/105_sound.wav" 105
+  sound:play-sound-later "sounds/106_sound.wav" 106
+  sound:play-sound-later "sounds/107_sound.wav" 107
+  sound:play-sound-later "sounds/108_sound.wav" 108
+  sound:play-sound-later "sounds/109_sound.wav" 109
+  sound:play-sound-later "sounds/110_sound.wav" 110
+  sound:play-sound-later "sounds/111_sound.wav" 111
+  sound:play-sound-later "sounds/112_sound.wav" 112
+  sound:play-sound-later "sounds/113_sound.wav" 113
+  sound:play-sound-later "sounds/114_sound.wav" 114
+  sound:play-sound-later "sounds/115_sound.wav" 115
+  sound:play-sound-later "sounds/116_sound.wav" 116
+  sound:play-sound-later "sounds/117_sound.wav" 117
+  sound:play-sound-later "sounds/118_sound.wav" 118
+  sound:play-sound-later "sounds/119_sound.wav" 119
+  sound:play-sound-later "sounds/120_sound.wav" 120
+  sound:play-sound-later "sounds/121_sound.wav" 121
+  sound:play-sound-later "sounds/122_sound.wav" 122
+  sound:play-sound-later "sounds/123_sound.wav" 123
+  sound:play-sound-later "sounds/124_sound.wav" 124
+  sound:play-sound-later "sounds/125_sound.wav" 125
+
+
   clear-all
   set-default-shape turtles "ant"
   set food_down 0
+  set diffusion-rate 50
+  set evaporation-rate 10
+  set vision-radius 3
   create-turtles population
   [ set size 3         ;; easier to see
     set color red      ;; red = not carrying food
     set coordX 0
     set coordY 0
-    set goRandom 1
+    set state "random"
   ]
   setup-patches
   reset-ticks
@@ -61,7 +200,9 @@ end
 to setup-patches
   ask patches [ ;; setup the colony nest
     setup-nest
-     ]
+    set chemical 0
+    set circleInfluence patches in-radius 10
+  ]
   setup-food
   ask patches [
     recolor-patch
@@ -109,7 +250,7 @@ to recolor-patch  ;; patch procedure
   [ ifelse food > 0
     [ if food = 1 [ set pcolor cyan ]]
     ;; scale color to show chemical concentration
-    [ ifelse foraging_strategies = "group foraging"[
+    [ ifelse foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb" [
       set pcolor scale-color green chemical 0.1 5 ][
       set pcolor black
   ]] ]
@@ -119,28 +260,69 @@ end
 ;;; Go procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-to go  ;; forever button
-  if all? turtles [ color = red ] and all? patches [ food = 0 ] [
+to go
+  if all? patches [food = 0] and all? turtles [color = red or color = pink][
     launch-fireworks
     stop
   ]
-  (ifelse
-    foraging_strategies = "solitary foraging" [
+  ask turtles
+  [ if who >= ticks [ stop ] ;; delay initial departure
+    ifelse state != "nest"
+    [ look-for-food ;; not carrying food? look for it
+      if state = "carried" and (count my-links != 1)[
+      break-link
+      ]
+      if distancexy coordX coordY < vision-radius and state = "wiggleXY" [ ;; The movement is once again randomised after the desired position is seen
+        set state "random"
+        break-link
+      ]
+      if state = "random" [
+        set color red
+        wiggle
+        detect-food
+      ]
+      if state = "wiggleXY"[
+        set color red - 2
+        wiggle-to-xy
+        detect-food
+      ]
+      if state = "recruiting1"[
+        ifelse distancexy 0 0 < 5 [ ;; become stationary when in the nest
+          set state "recruiting2"
+        ][
+          wiggle-to-0 ;; approach the nest
+        ]
+      ]
+      if state = "recruiting2"[
+        recruit-ant ;; send a signal to recruit a stationary ant in the nest
+      ]
+    ]
+    [
+      if state = "nest"[ ;; coming back to the nest with food
+        return-to-nest ;; carrying food? take it back to nest
+        if foraging_strategies = "prey chain transfer"[
+          transfer-prey
+        ]
+      ]
+    ]
+    if state != "carried" and state != "recruiting2" and state != "stationary"[
+      fd 1 ]
+    if foraging_strategies = "tandem carrying"[
+      assign-stationary ;; randomly walking ants can become stationary ants if they happen to stumble on the nest
+    ]
+  ]
 
+  if foraging_strategies = "pheromone trails" [
+    diffuse chemical (diffusion-rate / 100)
+  ]
+  ask patches [
+    recolor-patch
+    if foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb"[
+     set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
     ]
-    foraging_strategies = "prey chain transfer" [
-      go-chain
-    ]
-    foraging_strategies = "tandem carrying" [
-
-    ]
-    foraging_strategies = "group foraging" [
-      go-chem
-    ]
-  [])
+  ]
   tick
 end
-
 
 to launch-fireworks
   clear-all
@@ -232,46 +414,89 @@ to go-chain
       ][
         wiggle-to-xy
       ]
+  ]
+  ]
+end
+
+to break-link ;; assigns random state to itself and the linked ants
+  set state "random"
+  ask my-links [ask other-end[
+    set state "random"
+    ask my-out-links[
+      die
     ]
-    [ return-to-nest ;; carrying food? take it back to nest
-      wiggle
-      transfer-prey
-    ]
-    fd 1 ]
-  ask patches [
-    recolor-patch
+  ]]
+  ask my-links[
+      die
+  ]
+end
+
+to recruit-ant
+  call-stationary ;; make the stationary ant appraoch self
+  if any? turtles with [state = "stationary"] and distance (min-one-of turtles with [state = "stationary"] [distance myself]) <= 1[ ;; if a stationary ant is close
+          ask min-one-of turtles with [state = "stationary"][distance myself][ ;; ask the ant to turn around and be carried
+            rt 180
+            set state "carried"
+            set color green
+          ]
+          create-link-to min-one-of turtles with [state = "carried"][distance myself] [tie] ;; link to the stationary ant
+          set state "wiggleXY" ;; go to the location of interest with the carried ant attached
+
+        ]
+end
+
+to detect-food ;; sets heading of the ant towards the nearest food source in the vision radius
+  if any? patches with [food > 0] and distance (min-one-of patches with [food > 0] [distance myself]) < vision-radius[
+    set heading towards min-one-of patches with [food > 0] [distance myself]
   ]
 end
 
 to transfer-prey
-  if any? (turtles-on patch-here) with[color = red and goRandom = 1][
-    if random 100 < (100 / (timesFoodPassed + 2))[
-      ask one-of ((turtles-on patch-here) with[color = red])[
+  if random 100 < (100 / (timesFoodPassed + 2))[ ;; the chance of attempting to pass the carried food decreases with the number the food was passed
+    if timesFoodPassed < 2 and state = "nest" [ ;; because of the small map size and high concentration of ants, we are limiting the initiative to approach ants at some point
+      approach-ant
+    ]
+    if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) <= 1[ ;; another ant close enough to pass food
+      ask min-one-of turtles with [state = "random"][distance myself][
         set color orange + 1
         set coordX xcor
         set coordY ycor
-        set timesFoodPassed [timesFoodPassed] of myself + 1
+        set state "nest"
+        set timesFoodPassed ([timesFoodPassed] of myself) + 1
+;        show timesFoodPassed
         rt 180
       ]
-      set color red
+      set color red - 2
       rt 180
-      set goRandom 0
+      set state "wiggleXY"
     ]
   ]
 end
 
-to go-chem
-  ask turtles
-  [ if who >= ticks [ stop ] ;; delay initial departure
-    ifelse color = red
-    [ look-for-food  ]       ;; not carrying food? look for it
-    [ return-to-nest ]       ;; carrying food? take it back to nest
-    wiggle
-    fd 1 ]
-  diffuse chemical (diffusion-rate / 100)
-  ask patches
-  [ set chemical chemical * (100 - evaporation-rate) / 100  ;; slowly evaporate chemical
-    recolor-patch ]
+to approach-ant
+  if any? turtles with [state = "random"] and distance (min-one-of turtles with [state = "random"] [distance myself]) < vision-radius[ ;; is there a wandering ant in the vision radius?
+    set heading towards min-one-of turtles with [state = "random"][distance myself] ;; turn towards that ant
+    ask min-one-of turtles with [state = "random" ][distance myself][
+      set heading towards myself ;; turn that ant towards myself
+    ]
+  ]
+end
+
+to call-stationary ;; makes a stationary ant approach the caller
+  if any? turtles with [state = "stationary"][
+    set heading towards min-one-of turtles with [state = "stationary"][distance myself]
+    ask min-one-of turtles with [state = "stationary" ][distance myself][
+      set heading towards myself
+      fd 1
+    ]
+  ]
+end
+
+to assign-stationary
+  if nest? and state = "random" and count turtles with [state = "stationary"] < count turtles / 20[
+      set state "stationary"
+      set color pink
+    ]
 end
 
 to return-to-nest  ;; turtle procedure
@@ -279,26 +504,58 @@ to return-to-nest  ;; turtle procedure
   [ ;; drop food and head out again
     set color red
     rt 180
-    set goRandom 0
-;    show timesFoodPassed
+    if state = "nest"[
+        set state "wiggleXY"
+      if foraging_strategies = "tandem carrying"[
+        if count turtles with [state = "stationary"] < count turtles / 10[
+          set state "stationary"
+          set color pink
+      ]]
+    ]
   ]
-  [ if foraging_strategies = "group foraging"[
-    set chemical chemical + 60]  ;; drop some chemical
-    uphill-nest-scent ]         ;; head toward the greatest value of nest-scent
+  [ if foraging_strategies = "pheromone trails"[
+      set chemical chemical + 60]  ;; drop some chemical
+    wiggle-to-0 ]         ;; head toward the nest
 end
 
 to look-for-food  ;; turtle procedure
   if food > 0
-  [ set color orange + 1     ;; pick up food
-    set food food - 1        ;; and reduce the food source
-    rt 180                   ;; and turn around
-    set coordX xcor
-    set coordY ycor
-    set timesFoodPassed 0
-    stop ]
+  [
+    break-link
+    ifelse foraging_strategies = "tandem carrying" and count (patches with [food > 0 and distance myself < vision-radius]) > 2 and random 100 < 75
+    and count other turtles with [state = "recruiting2" or state = "recruiting1"] < count turtles with [state = "stationary"] * 2[
+      set state "recruiting1"
+      set color blue
+      set coordX xcor
+      set coordY ycor
+
+    ][
+      if state != "carried"[
+        if foraging_strategies = "pheromone bomb"[
+          deploy-bomb
+        ]
+        set color orange + 1     ;; pick up food
+        set food food - 1        ;; and reduce the food source
+        rt 180                   ;; and turn around
+        set coordX xcor
+        set coordY ycor
+        set state "nest"
+        set timesFoodPassed 0
+        stop ]]]
   ;; go in the direction where the chemical smell is strongest
-  if foraging_strategies = "group foraging" and (chemical >= 0.05) and (chemical < 2)
-  [ uphill-chemical ]
+  if foraging_strategies = "pheromone trails" or foraging_strategies = "pheromone bomb"[
+    if (chemical >= 0.05) and (chemical < 2)[ uphill-chemical ]
+  ]
+end
+
+to deploy-bomb
+;  print "bomb deployed"
+  ask patches in-radius 5 [
+    set chemical 60
+    ask circleInfluence [
+      set chemical 20 - distance myself
+    ]
+  ]
 end
 
 ;; sniff left and right, and go where the strongest smell is
@@ -321,6 +578,20 @@ to uphill-nest-scent  ;; turtle procedure
   [ ifelse scent-right > scent-left
     [ rt 45 ]
     [ lt 45 ] ]
+end
+
+to wiggle-to-0  ;; turtle procedure
+  let direction (towardsxy 0 0)
+  rt random 20
+  lt random 20
+
+  if subtract-headings direction heading  > 30 [
+    set heading (direction + 330) mod 360
+  ]
+  if subtract-headings direction heading  < -30[
+    set heading (direction + 30) mod 360
+  ]
+  if not can-move? 1 [ rt 180 ]
 end
 
 to wiggle  ;; turtle procedure
@@ -354,10 +625,6 @@ to-report chemical-scent-at-angle [angle]
   if p = nobody [ report 0 ]
   report [chemical] of p
 end
-
-
-; Copyright 1997 Uri Wilensky.
-; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
 257
@@ -403,36 +670,6 @@ NIL
 NIL
 1
 
-SLIDER
-828
-193
-1018
-226
-diffusion-rate
-diffusion-rate
-0.0
-99.0
-50.0
-1.0
-1
-NIL
-HORIZONTAL
-
-SLIDER
-828
-234
-1018
-267
-evaporation-rate
-evaporation-rate
-0.0
-99.0
-11.0
-1.0
-1
-NIL
-HORIZONTAL
-
 BUTTON
 136
 71
@@ -459,71 +696,51 @@ population
 population
 0.0
 200.0
-170.0
+100.0
 1.0
 1
 NIL
 HORIZONTAL
 
 CHOOSER
-32
-277
-198
-322
+43
+205
+209
+250
 foraging_strategies
 foraging_strategies
-"solitary foraging" "prey chain transfer" "tandem carrying" "group foraging"
-3
-
-TEXTBOX
-832
-166
-982
-184
-Chem trails\n
-14
-0.0
+"solitary foraging" "prey chain transfer" "tandem carrying" "pheromone trails" "pheromone bomb"
 1
 
 SLIDER
-841
-446
-1013
-479
+39
+118
+211
+151
 food_amount
 food_amount
 0
 500
-6.0
+300.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-844
-495
-1016
-528
+38
+160
+210
+193
 blob_count
 blob_count
 1
 200
-178.0
+51.0
 1
 1
 NIL
 HORIZONTAL
-
-TEXTBOX
-842
-360
-1030
-413
-Menu (AKA Food Options)\n
-14
-0.0
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -895,6 +1112,87 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="pheromone trails" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;pheromone trails&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
+  </experiment>
+  <experiment name="solitary foraging" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;solitary foraging&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
+  </experiment>
+  <experiment name="prey chain transfer" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;prey chain transfer&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
+  </experiment>
+  <experiment name="tandem carrying" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;tandem carrying&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
+  </experiment>
+  <experiment name="pheromone bomb" repetitions="1" runMetricsEveryStep="false">
+    <setup>random-seed food_amount + 1000 * blob_count + salt
+setup</setup>
+    <go>go</go>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="foraging_strategies">
+      <value value="&quot;pheromone bomb&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="blob_count" first="1" step="2" last="51"/>
+    <steppedValueSet variable="food_amount" first="30" step="15" last="300"/>
+    <enumeratedValueSet variable="population">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="salt" first="0" step="60000" last="540000"/>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
